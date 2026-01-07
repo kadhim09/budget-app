@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>برنامج تقسيم الراتب وإدارة المصاريف</title>
+  <style>
+    body { font-family: system-ui, Arial; margin: 18px; line-height: 1.6; }
+    .wrap { max-width: 980px; margin: auto; }
+    .card { border: 1px solid #ddd; border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+    h2,h3 { margin: 0 0 10px; }
+    .muted { color: #666; font-size: 13px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    label { display:block; font-size: 14px; margin-bottom: 6px; }
+    input { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #ccc; }
+    input[readonly] { background:#f7f7f7; }
+    button { padding: 10px 14px; border-radius: 10px; border: 1px solid #999; background: #f6f6f6; cursor: pointer; }
+    .row { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px dashed #eee; }
+    .row:last-child { border-bottom: 0; }
+    .ok { font-weight: 700; }
+    .warn { font-weight: 700; color: #b00020; }
+    .btns { display:flex; gap:8px; flex-wrap: wrap; margin-top: 10px; }
+    .line { border: none; border-top: 1px solid #eee; margin: 14px 0; }
+    .expense-row { display:grid; grid-template-columns: 1.2fr 1fr auto; gap:10px; align-items:end; }
+    .expense-row .remove { padding: 10px 12px; }
+    @media (max-width: 760px) {
+      .grid, .grid3 { grid-template-columns: 1fr; }
+      .expense-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <div class="card">
+    <h2>إدارة الدخل والمصاريف</h2>
+    <div class="muted">الدخل الكلي يُحسب تلقائيًا، وكل المصاريف تُخصم منه. (سحب الاحتياط لا يؤثر على الدخل)</div>
+  </div>
+
+  <!-- الدخل -->
+  <div class="card">
+    <h3>الدخل</h3>
+    <div class="grid">
+      <div>
+        <label>الراتب الأول</label>
+        <input id="salary1" type="number" value="" min="" step="1000">
+      </div>
+      <div>
+        <label>الراتب الثاني</label>
+        <input id="salary2" type="number" value="" min="" step="1000">
+      </div>
+    </div>
+
+    <div style="margin-top:10px" class="grid">
+      <div>
+        <label>الدخل الكلي</label>
+        <input id="totalIncome" type="text" readonly>
+      </div>
+      <div class="muted">هذا الرقم هو الأساس الذي تُخصم منه المصاريف.</div>
+    </div>
+  </div>
+
+  <!-- مصاريف تعليم -->
+  <div class="card">
+    <h3>مصاريف تعليم</h3>
+    <div class="grid">
+      <div>
+        <label>مصاريف روضة</label>
+        <input id="nursery" type="number" value="" min="" step="1000">
+      </div>
+      <div>
+        <label>مصاريف مدرسة</label>
+        <input id="school" type="number" value="" min="" step="1000">
+      </div>
+    </div>
+  </div>
+
+  <!-- طفل جديد -->
+  <div class="card">
+    <h3>مصاريف طفل جديد</h3>
+    <div class="grid3">
+      <div>
+        <label>ملابس</label>
+        <input id="babyClothes" type="number" value="" min="" step="1000">
+      </div>
+      <div>
+        <label>حليب</label>
+        <input id="babyMilk" type="number" value="" min="" step="1000">
+      </div>
+      <div>
+        <label>حفاظات</label>
+        <input id="babyDiapers" type="number" value="" min="" step="1000">
+      </div>
+    </div>
+  </div>
+
+  <!-- مصاريف ثابتة -->
+  <div class="card">
+    <h3>مصاريف عامة (ثابتة)</h3>
+    <div class="grid">
+      <div>
+        <label>مصاريف رصيد</label>
+        <input id="phone" type="number" value="" min="" step="1000">
+      </div>
+      <div>
+        <label>مصاريف بيت</label>
+        <input id="home" type="number" value="" min="" step="1000">
+      </div>
+      <div>
+        <label>مصاريف ثانوية</label>
+        <input id="secondary" type="number" value="" min="" step="1000">
+      </div>
+      <div>
+        <label>حقل إضافي (أي مصروف آخر)</label>
+        <input id="other" type="number" value="" min="" step="1000">
+      </div>
+    </div>
+
+    <hr class="line">
+
+    <h3 style="margin-top:0">مصاريف إضافية (تضيفها أنت)</h3>
+    <div class="muted">اضغط "إضافة مصروف" حتى تضيف سطر جديد باسم ومبلغ. هذا المبلغ ينخصم من الدخل الكلي.</div>
+
+    <div id="extraExpenses"></div>
+
+    <div class="btns">
+      <button type="button" onclick="addExpenseRow()">إضافة مصروف</button>
+      <button type="button" onclick="clearExtraExpenses()">مسح المصاريف الإضافية</button>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <div>مجموع المصاريف الإضافية</div>
+      <div class="ok" id="extraTotal">-</div>
+    </div>
+  </div>
+
+  <!-- ادخار واحتياط -->
+  <div class="card">
+    <h3>الادخار والاحتياط (تراكم)</h3>
+
+    <div class="grid">
+      <div>
+        <label>ادخار: الرصيد الحالي (يتراكم)</label>
+        <input id="savingsBalance" type="number" value="" min="" step="1000">
+      </div>
+      <div>
+        <label>ادخار: إضافة هذا الشهر</label>
+        <input id="savingsAdd" type="number" value="" min="" step="1000">
+        <div class="btns">
+          <button type="button" onclick="applySavings()">أضف إلى الادخار</button>
+          <button type="button" onclick="resetSavingsAdd()">تصفير إضافة الادخار</button>
+        </div>
+      </div>
+    </div>
+
+    <hr class="line">
+
+    <div class="grid">
+      <div>
+        <label>احتياط: الرصيد الحالي (يتراكم)</label>
+        <input id="reserveBalance" type="number" value="" min="" step="1000">
+      </div>
+      <div>
+        <label>احتياط: إضافة هذا الشهر</label>
+        <input id="reserveAdd" type="number" value="" min="" step="1000">
+        <div class="btns">
+          <button type="button" onclick="applyReserve()">أضف إلى الاحتياط</button>
+          <button type="button" onclick="resetReserveAdd()">تصفير إضافة الاحتياط</button>
+        </div>
+      </div>
+    </div>
+
+    <hr class="line">
+
+    <!-- سحب من الاحتياط -->
+    <div class="grid">
+      <div>
+        <label>سحب من الاحتياط (لا يؤثر على الدخل الكلي)</label>
+        <input id="reserveWithdraw" type="number" value="" min="" step="1000">
+        <div class="btns">
+          <button type="button" onclick="withdrawReserve()">سحب</button>
+          <button type="button" onclick="resetReserveWithdraw()">تصفير السحب</button>
+        </div>
+      </div>
+      <div class="muted">
+        هذا السحب ينقص من رصيد الاحتياط المتراكم فقط، ولا يدخل ضمن المصاريف الشهرية.
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <div>رصيد الاحتياط الحالي بعد السحب/الإضافة</div>
+      <div class="ok" id="reserveDisplay">-</div>
+    </div>
+
+    <div class="muted" style="margin-top:10px">
+      تنبيه: "إضافة هذا الشهر" للادخار/الاحتياط تُحسب ضمن المصاريف لأنها تُخصم من الدخل الكلي. أما "سحب من الاحتياط" لا علاقة له بالدخل.
+    </div>
+  </div>
+
+  <!-- النتائج -->
+  <div class="card">
+    <h3>النتائج</h3>
+    <div class="row"><div>الدخل الكلي</div><div class="ok" id="r_income">-</div></div>
+    <div class="row"><div>إجمالي المصاريف (يشمل ادخار/احتياط الشهري + المصاريف الإضافية)</div><div class="ok" id="r_expenses">-</div></div>
+    <div class="row"><div>الباقي بعد كل المصاريف</div><div id="r_left">-</div></div>
+    <div class="row"><div>نسبة المصاريف من الدخل</div><div id="r_ratio">-</div></div>
+  </div>
+
+</div>
+
+<script>
+  const el = (id) => document.getElementById(id);
+  function nVal(input){ return Number(input.value) || 0; }
+  function n(id){ return Number(el(id).value) || 0; }
+  function fmt(v){
+    const x = Math.round(Number(v) || 0);
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + " د.ع";
+  }
+
+  // ===== مصاريف إضافية ديناميكية =====
+  function addExpenseRow(nameVal="", amountVal=0){
+    const wrap = el("extraExpenses");
+
+    const row = document.createElement("div");
+    row.className = "expense-row";
+    row.style.marginTop = "10px";
+
+    const nameBox = document.createElement("div");
+    const nameLabel = document.createElement("label");
+    nameLabel.textContent = "اسم المصروف";
+    const nameInput = document.createElement("input");
+    nameInput.type = "text";
+    nameInput.placeholder = "مثال: صيانة / علاج / ملابس";
+    nameInput.value = nameVal;
+    nameInput.addEventListener("input", calc);
+    nameBox.appendChild(nameLabel);
+    nameBox.appendChild(nameInput);
+
+    const amountBox = document.createElement("div");
+    const amountLabel = document.createElement("label");
+    amountLabel.textContent = "المبلغ";
+    const amountInput = document.createElement("input");
+    amountInput.type = "number";
+    amountInput.min = "0";
+    amountInput.step = "1000";
+    amountInput.value = String(amountVal || 0);
+    amountInput.addEventListener("input", calc);
+    amountBox.appendChild(amountLabel);
+    amountBox.appendChild(amountInput);
+
+    const btnBox = document.createElement("div");
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "remove";
+    removeBtn.textContent = "حذف";
+    removeBtn.addEventListener("click", () => {
+      row.remove();
+      calc();
+    });
+    btnBox.appendChild(removeBtn);
+
+    // نخزن المبلغ داخل row للقراءة السريعة
+    row._amountInput = amountInput;
+
+    row.appendChild(nameBox);
+    row.appendChild(amountBox);
+    row.appendChild(btnBox);
+    wrap.appendChild(row);
+
+    calc();
+  }
+
+  function getExtraExpensesTotal(){
+    const wrap = el("extraExpenses");
+    const rows = wrap.querySelectorAll(".expense-row");
+    let sum = 0;
+    rows.forEach(r => {
+      const amountInput = r._amountInput || r.querySelector('input[type="number"]');
+      sum += nVal(amountInput);
+    });
+    return sum;
+  }
+
+  function clearExtraExpenses(){
+    el("extraExpenses").innerHTML = "";
+    calc();
+  }
+
+  // ===== الحساب الرئيسي =====
+  function calc(){
+    const income = n("salary1") + n("salary2");
+    el("totalIncome").value = fmt(income);
+
+    const edu = n("nursery") + n("school");
+    const baby = n("babyClothes") + n("babyMilk") + n("babyDiapers");
+    const general = n("phone") + n("home") + n("secondary") + n("other");
+
+    // ادخار/احتياط الشهري (إضافة هذا الشهر) تدخل ضمن المصاريف
+    const monthlySavings = n("savingsAdd");
+    const monthlyReserve = n("reserveAdd");
+
+    // مصاريف إضافية ديناميكية
+    const extra = getExtraExpensesTotal();
+    el("extraTotal").textContent = fmt(extra);
+
+    const expenses = edu + baby + general + monthlySavings + monthlyReserve + extra;
+    const left = income - expenses;
+
+    el("r_income").textContent = fmt(income);
+    el("r_expenses").textContent = fmt(expenses);
+
+    const leftEl = el("r_left");
+    leftEl.textContent = fmt(left);
+    leftEl.className = (left >= 0) ? "ok" : "warn";
+
+    const ratio = income > 0 ? (expenses / income) * 100 : 0;
+    el("r_ratio").textContent = ratio.toFixed(1) + "%";
+
+    // عرض رصيد الاحتياط الحالي
+    el("reserveDisplay").textContent = fmt(n("reserveBalance"));
+  }
+
+  // ===== تراكم الادخار =====
+  function applySavings(){
+    const add = n("savingsAdd");
+    if(add <= 0) return;
+    el("savingsBalance").value = String(n("savingsBalance") + add);
+    el("savingsAdd").value = "0";
+    calc();
+  }
+  function resetSavingsAdd(){
+    el("savingsAdd").value = "0";
+    calc();
+  }
+
+  // ===== تراكم الاحتياط =====
+  function applyReserve(){
+    const add = n("reserveAdd");
+    if(add <= 0) return;
+    el("reserveBalance").value = String(n("reserveBalance") + add);
+    el("reserveAdd").value = "0";
+    calc();
+  }
+  function resetReserveAdd(){
+    el("reserveAdd").value = "0";
+    calc();
+  }
+
+  // ===== سحب من الاحتياط (لا يؤثر على الدخل) =====
+  function withdrawReserve(){
+    const w = n("reserveWithdraw");
+    if(w <= 0) return;
+
+    const current = n("reserveBalance");
+    const newBal = current - w;
+
+    // إذا تريد تمنع السحب إذا ماكو رصيد، خلّيه يوقف هنا:
+    if(newBal < 0){
+      alert("المبلغ أكبر من رصيد الاحتياط الحالي.");
+      return;
+    }
+
+    el("reserveBalance").value = String(newBal);
+    el("reserveWithdraw").value = "0";
+    calc();
+  }
+  function resetReserveWithdraw(){
+    el("reserveWithdraw").value = "0";
+    calc();
+  }
+
+  // اربط الحقول الثابتة بالحساب
+  [
+    "salary1","salary2",
+    "nursery","school",
+    "babyClothes","babyMilk","babyDiapers",
+    "phone","home","secondary","other",
+    "savingsAdd","reserveAdd",
+    "savingsBalance","reserveBalance"
+  ].forEach(id => el(id).addEventListener("input", calc));
+
+  // ابدأ بسطر مصروف إضافي واحد (اختياري). إذا ما تريده، احذف السطر التالي:
+  // addExpenseRow();
+
+  calc();
+</script>
+
+</body>
+</html>
