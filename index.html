@@ -24,8 +24,8 @@
     .line { border: none; border-top: 1px solid #eee; margin: 14px 0; }
     .expense-row { display:grid; grid-template-columns: 1.2fr 1fr auto; gap:10px; align-items:end; }
     .expense-row .remove { padding: 10px 12px; }
-    .status { font-size: 13px; color: #0a6; margin-top: 8px; }
-    .status.err { color: #b00020; }
+    .pill { display:inline-block; padding:6px 10px; border:1px solid #ddd; border-radius: 999px; font-size:12px; }
+    .status { margin-top:8px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
     @media (max-width: 760px) {
       .grid, .grid3 { grid-template-columns: 1fr; }
       .expense-row { grid-template-columns: 1fr; }
@@ -44,25 +44,30 @@
   <div class="card" id="monthCard">
     <h3>إدارة الشهور والنسخ الاحتياطي</h3>
 
-    <div class="grid">
+    <div class="grid" style="align-items:end">
       <div>
         <label>الشهر</label>
         <input id="monthKey" type="month">
-        <div class="muted">كل شهر ينحفظ وحده. عند تبديل الشهر، راح يحاول يحمّل بياناته من السحابة.</div>
+        <div class="muted">كل شهر ينحفظ وحده. عند تبديل الشهر أو بدء شهر جديد، راح ينخزن الشهر السابق تلقائيًا.</div>
       </div>
+
       <div>
         <label>إجراءات</label>
         <div class="btns" style="margin-top:0">
-          <button type="button" onclick="saveMonth()">حفظ هذا الشهر (سحابة)</button>
-          <button type="button" onclick="loadMonth()">تحميل هذا الشهر (سحابة)</button>
+          <button type="button" onclick="saveMonth()">حفظ هذا الشهر</button>
+          <button type="button" onclick="loadMonth()">تحميل هذا الشهر</button>
           <button type="button" onclick="startNewMonth()">بدء شهر جديد</button>
-          <button type="button" onclick="exportBackup()">تصدير نسخة احتياطية</button>
+          <button type="button" onclick="exportBackup()">تصدير نسخة</button>
           <button type="button" onclick="triggerImport()">استيراد نسخة</button>
-          <button type="button" onclick="clearAllLocal()">مسح النسخة المحلية فقط</button>
+          <button type="button" onclick="clearAllData()">مسح كل البيانات</button>
         </div>
         <input id="importFile" type="file" accept="application/json" style="display:none" />
-        <div class="muted">ملاحظة: النسخة الاحتياطية تخص النسخة المحلية. السحابة هي الأساس للمزامنة بين الأجهزة.</div>
-        <div id="cloudStatus" class="status"></div>
+        <div class="muted">ملاحظة: الادخار/الاحتياط (الرصيد الحالي) يبقى متراكم لكل الشهور، أما "إضافة هذا الشهر" تنحفظ ضمن الشهر.</div>
+
+        <div class="status">
+          <span class="pill" id="cloudState">☁️ Cloud: غير متصل</span>
+          <span class="pill" id="saveState">💾 حفظ: جاهز</span>
+        </div>
       </div>
     </div>
   </div>
@@ -90,7 +95,7 @@
     </div>
   </div>
 
-  <!-- مصاريف تعليم -->
+  <!-- تعليم -->
   <div class="card">
     <h3>مصاريف تعليم</h3>
     <div class="grid">
@@ -124,7 +129,7 @@
     </div>
   </div>
 
-  <!-- مصاريف ثابتة -->
+  <!-- مصاريف عامة -->
   <div class="card">
     <h3>مصاريف عامة (ثابتة)</h3>
     <div class="grid">
@@ -166,11 +171,11 @@
 
   <!-- ادخار واحتياط -->
   <div class="card">
-    <h3>الادخار والاحتياط</h3>
+    <h3>الادخار والاحتياط (تراكم)</h3>
 
     <div class="grid">
       <div>
-        <label>ادخار: الرصيد الحالي (محلي)</label>
+        <label>ادخار: الرصيد الحالي (يتراكم)</label>
         <input id="savingsBalance" type="number" value="0" min="0" step="1000">
       </div>
       <div>
@@ -187,7 +192,7 @@
 
     <div class="grid">
       <div>
-        <label>احتياط: الرصيد الحالي (محلي)</label>
+        <label>احتياط: الرصيد الحالي (يتراكم)</label>
         <input id="reserveBalance" type="number" value="0" min="0" step="1000">
       </div>
       <div>
@@ -212,7 +217,7 @@
         </div>
       </div>
       <div class="muted">
-        هذا السحب ينقص من رصيد الاحتياط المحلي فقط، ولا يدخل ضمن المصاريف الشهرية.
+        هذا السحب ينقص من رصيد الاحتياط المتراكم فقط، ولا يدخل ضمن المصاريف الشهرية.
       </div>
     </div>
 
@@ -238,42 +243,34 @@
 </div>
 
 <script>
-  // ✅ رابط الـ Apps Script Web App
-  const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbwDJnWqWnkREdP_his-iaLm3I_-HJXLQ_oiLarMmz5_sZruMepwpvSK092u3ZgQ8q-zuQ/exec";
+  // ✅ ضع رابط Google Apps Script هنا
+  const API_URL = "https://script.google.com/macros/s/AKfycbxNe06Egh7eV4sE_wi3RZFilinf34Zmdcs7QLJA1qbOrW403AsRQKph4lnNaO29VKcWjg/exec";
 
-  // ===== أدوات عامة =====
   const el = (id) => document.getElementById(id);
   function nVal(input){ return Number(input?.value) || 0; }
   function n(id){ return Number(el(id)?.value) || 0; }
-  function setVal(id, v){ if(el(id)) el(id).value = (v ?? ""); }
+  function setVal(id, v){ if(el(id)) el(id).value = (v ?? 0); }
   function fmt(v){
     const x = Math.round(Number(v) || 0);
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + " د.ع";
   }
-  function setStatus(msg, isErr=false){
-    const s = el("cloudStatus");
-    if(!s) return;
-    s.textContent = msg || "";
-    s.className = "status" + (isErr ? " err" : "");
-  }
 
-  // ===== نسخة محلية (للنسخ الاحتياطي فقط) =====
-  const STORE_KEY = "budget_local_store_v2";
+  const STORE_KEY = "budget_monthly_store_v2";
+
   function loadStore(){
     try{
       const raw = localStorage.getItem(STORE_KEY);
-      if(!raw) return { global: { savingsBalance: 0, reserveBalance: 0 }, months: {} };
+      if(!raw) return { global: { savingsBalance: 0, reserveBalance: 0 }, months: {}, _lastMonthKey: "" };
       const s = JSON.parse(raw);
       s.global = s.global || { savingsBalance: 0, reserveBalance: 0 };
       s.months = s.months || {};
+      s._lastMonthKey = s._lastMonthKey || "";
       return s;
     }catch(e){
-      return { global: { savingsBalance: 0, reserveBalance: 0 }, months: {} };
+      return { global: { savingsBalance: 0, reserveBalance: 0 }, months: {}, _lastMonthKey: "" };
     }
   }
-  function saveStore(store){
-    localStorage.setItem(STORE_KEY, JSON.stringify(store));
-  }
+  function saveStore(store){ localStorage.setItem(STORE_KEY, JSON.stringify(store)); }
 
   function getThisMonth(){
     const d = new Date();
@@ -292,10 +289,105 @@
     return `${d.getFullYear()}-${mm}`;
   }
 
+  // ===== Cloud helpers =====
+  function setCloud(ok, msg){
+    const t = ok ? "☁️ Cloud: متصل" : "☁️ Cloud: غير متصل";
+    el("cloudState").textContent = msg ? `${t} — ${msg}` : t;
+  }
+  function setSavingState(txt){
+    el("saveState").textContent = txt;
+  }
+
+  function buildCloudPayload(monthKey){
+    // نحول مصاريف اضافية الى JSON string (اسم + مبلغ)
+    const extras = getExtraExpensesList().filter(x => x.name || x.amount);
+    const payload = {
+      month: monthKey,
+      salary1: n("salary1"),
+      salary2: n("salary2"),
+      nursery: n("nursery"),
+      school: n("school"),
+      baby_clothes: n("babyClothes"),
+      baby_milk: n("babyMilk"),
+      diapers: n("babyDiapers"),
+      phone: n("phone"),
+      home: n("home"),
+      secondary: n("secondary"),
+      other: n("other"),
+      savings_add: n("savingsAdd"),
+      reserve_add: n("reserveAdd"),
+      extra_name: JSON.stringify(extras),        // نخزنها كنص
+      extra_amount: extras.reduce((a,b)=>a+(Number(b.amount)||0),0)
+    };
+    return payload;
+  }
+
+  async function cloudSave(monthKey){
+    try{
+      setSavingState("💾 حفظ: جاري رفعه...");
+      await fetch(API_URL, {
+        method: "POST",
+        mode: "no-cors", // حتى يتجاوز مشاكل CORS (رفع فقط)
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(buildCloudPayload(monthKey))
+      });
+      setCloud(true, "تم الرفع");
+      setSavingState("💾 حفظ: تم ✅");
+    }catch(e){
+      setCloud(false, "فشل الرفع");
+      setSavingState("💾 حفظ: محلي فقط");
+    }
+  }
+
+  async function cloudLoad(monthKey){
+    // محاولة تحميل من الشيت (قد تتأثر بـ CORS في بعض المتصفحات)
+    try{
+      const url = API_URL + "?action=get&month=" + encodeURIComponent(monthKey);
+      const res = await fetch(url, { method:"GET" });
+      const j = await res.json();
+      if(j && j.ok && j.data){
+        // data = صف كامل (Array)
+        const row = j.data;
+        // ترتيب الأعمدة مثل ما سويت بالشيت:
+        // A month, B salary1, C salary2, D nursery, E school, F baby_clothes, G baby_milk, H diapers,
+        // I phone, J home, K secondary, L other, M savings_add, N reserve_add, O extra_name, P extra_amount, Q timestamp
+        setVal("salary1", row[1] || 0);
+        setVal("salary2", row[2] || 0);
+        setVal("nursery", row[3] || 0);
+        setVal("school", row[4] || 0);
+        setVal("babyClothes", row[5] || 0);
+        setVal("babyMilk", row[6] || 0);
+        setVal("babyDiapers", row[7] || 0);
+        setVal("phone", row[8] || 0);
+        setVal("home", row[9] || 0);
+        setVal("secondary", row[10] || 0);
+        setVal("other", row[11] || 0);
+        setVal("savingsAdd", row[12] || 0);
+        setVal("reserveAdd", row[13] || 0);
+
+        el("extraExpenses").innerHTML = "";
+        try{
+          const extras = JSON.parse(row[14] || "[]");
+          (extras || []).forEach(x => addExpenseRow(x.name || "", Number(x.amount)||0));
+        }catch(_e){
+          // اذا مو JSON نخليها فاضية
+        }
+
+        setCloud(true, "تم التحميل");
+        scheduleSaveAndCalc(true);
+        return true;
+      }
+      setCloud(false, "لا توجد بيانات");
+      return false;
+    }catch(e){
+      setCloud(false, "ممنوع/CORS");
+      return false;
+    }
+  }
+
   // ===== مصاريف إضافية ديناميكية =====
   function addExpenseRow(nameVal="", amountVal=0){
     const wrap = el("extraExpenses");
-
     const row = document.createElement("div");
     row.className = "expense-row";
     row.style.marginTop = "10px";
@@ -307,7 +399,7 @@
     nameInput.type = "text";
     nameInput.placeholder = "مثال: صيانة / علاج / ملابس";
     nameInput.value = nameVal || "";
-    nameInput.addEventListener("input", () => scheduleCalc());
+    nameInput.addEventListener("input", () => scheduleSaveAndCalc(true)); // ✅ فوري
     nameBox.appendChild(nameLabel);
     nameBox.appendChild(nameInput);
 
@@ -319,7 +411,7 @@
     amountInput.min = "0";
     amountInput.step = "1000";
     amountInput.value = String(amountVal || 0);
-    amountInput.addEventListener("input", () => scheduleCalc());
+    amountInput.addEventListener("input", () => scheduleSaveAndCalc(true)); // ✅ فوري
     amountBox.appendChild(amountLabel);
     amountBox.appendChild(amountInput);
 
@@ -330,7 +422,7 @@
     removeBtn.textContent = "حذف";
     removeBtn.addEventListener("click", () => {
       row.remove();
-      scheduleCalc(true);
+      scheduleSaveAndCalc(true);
     });
     btnBox.appendChild(removeBtn);
 
@@ -352,15 +444,16 @@
         amount: nVal(r._amountInput)
       });
     });
-    // remove empty rows
-    return list.filter(x => x.name || (Number(x.amount)||0) > 0);
+    return list;
   }
+
   function getExtraExpensesTotal(){
     return getExtraExpensesList().reduce((a,b)=>a+(Number(b.amount)||0), 0);
   }
+
   function clearExtraExpenses(){
     el("extraExpenses").innerHTML = "";
-    scheduleCalc(true);
+    scheduleSaveAndCalc(true);
   }
 
   // ===== الحساب =====
@@ -394,62 +487,38 @@
     el("reserveDisplay").textContent = fmt(n("reserveBalance"));
   }
 
-  let calcTimer = null;
-  function scheduleCalc(immediate=false){
-    if(immediate){ calc(); return; }
-    clearTimeout(calcTimer);
-    calcTimer = setTimeout(calc, 200);
-  }
-
-  // ===== ادخار/احتياط محلي =====
+  // ===== تراكم الادخار/الاحتياط =====
   function applySavings(){
     const add = n("savingsAdd");
     if(add <= 0) return;
     setVal("savingsBalance", n("savingsBalance") + add);
     setVal("savingsAdd", 0);
-    saveLocalSnapshot();
-    calc();
+    scheduleSaveAndCalc(true);
   }
-  function resetSavingsAdd(){
-    setVal("savingsAdd", 0);
-    saveLocalSnapshot();
-    calc();
-  }
+  function resetSavingsAdd(){ setVal("savingsAdd", 0); scheduleSaveAndCalc(true); }
+
   function applyReserve(){
     const add = n("reserveAdd");
     if(add <= 0) return;
     setVal("reserveBalance", n("reserveBalance") + add);
     setVal("reserveAdd", 0);
-    saveLocalSnapshot();
-    calc();
+    scheduleSaveAndCalc(true);
   }
-  function resetReserveAdd(){
-    setVal("reserveAdd", 0);
-    saveLocalSnapshot();
-    calc();
-  }
+  function resetReserveAdd(){ setVal("reserveAdd", 0); scheduleSaveAndCalc(true); }
+
   function withdrawReserve(){
     const w = n("reserveWithdraw");
     if(w <= 0) return;
-
     const current = n("reserveBalance");
     const newBal = current - w;
-    if(newBal < 0){
-      alert("المبلغ أكبر من رصيد الاحتياط الحالي.");
-      return;
-    }
+    if(newBal < 0){ alert("المبلغ أكبر من رصيد الاحتياط الحالي."); return; }
     setVal("reserveBalance", newBal);
     setVal("reserveWithdraw", 0);
-    saveLocalSnapshot();
-    calc();
+    scheduleSaveAndCalc(true);
   }
-  function resetReserveWithdraw(){
-    setVal("reserveWithdraw", 0);
-    saveLocalSnapshot();
-    calc();
-  }
+  function resetReserveWithdraw(){ setVal("reserveWithdraw", 0); scheduleSaveAndCalc(true); }
 
-  // ===== الحقول الشهرية =====
+  // ===== الشهرية =====
   const MONTH_FIELDS = [
     "salary1","salary2",
     "nursery","school",
@@ -458,63 +527,20 @@
     "savingsAdd","reserveAdd"
   ];
 
-  function captureMonthForCloud(){
-    const mk = currentMonthKey();
-    const extraList = getExtraExpensesList();
-    const extraTotal = getExtraExpensesTotal();
-
-    return {
-      month: mk,
-      salary1: n("salary1"),
-      salary2: n("salary2"),
-      nursery: n("nursery"),
-      school: n("school"),
-      baby_clothes: n("babyClothes"),
-      baby_milk: n("babyMilk"),
-      diapers: n("babyDiapers"),
-      phone: n("phone"),
-      home: n("home"),
-      secondary: n("secondary"),
-      other: n("other"),
-      savings_add: n("savingsAdd"),
-      reserve_add: n("reserveAdd"),
-      // نخزن قائمة المصاريف الإضافية كـ JSON داخل extra_name
-      extra_name: JSON.stringify(extraList),
-      // ونخزن مجموعها داخل extra_amount
-      extra_amount: extraTotal
-    };
+  function captureMonth(){
+    const data = {};
+    MONTH_FIELDS.forEach(id => data[id] = n(id));
+    data.extraExpenses = getExtraExpensesList();
+    data.savedAt = new Date().toISOString();
+    return data;
   }
 
-  function applyCloudDataToForm(data){
-    setVal("salary1", data.salary1 || 0);
-    setVal("salary2", data.salary2 || 0);
-    setVal("nursery", data.nursery || 0);
-    setVal("school", data.school || 0);
-
-    setVal("babyClothes", data.baby_clothes || 0);
-    setVal("babyMilk", data.baby_milk || 0);
-    setVal("babyDiapers", data.diapers || 0);
-
-    setVal("phone", data.phone || 0);
-    setVal("home", data.home || 0);
-    setVal("secondary", data.secondary || 0);
-    setVal("other", data.other || 0);
-
-    setVal("savingsAdd", data.savings_add || 0);
-    setVal("reserveAdd", data.reserve_add || 0);
-
-    // extra list from JSON stored in extra_name
+  function applyMonthData(data){
+    MONTH_FIELDS.forEach(id => setVal(id, (data?.[id] ?? 0)));
     el("extraExpenses").innerHTML = "";
-    try{
-      const list = JSON.parse(data.extra_name || "[]");
-      (Array.isArray(list) ? list : []).forEach(x => addExpenseRow(x.name || "", Number(x.amount)||0));
-    }catch(_e){
-      // لو صار خلل، ما نكسر البرنامج
-    }
-
+    (data?.extraExpenses || []).forEach(x => addExpenseRow(x.name || "", Number(x.amount)||0));
     setVal("reserveWithdraw", 0);
     calc();
-    saveLocalSnapshot();
   }
 
   function clearMonthForm(){
@@ -522,125 +548,85 @@
     el("extraExpenses").innerHTML = "";
     setVal("reserveWithdraw", 0);
     calc();
-    saveLocalSnapshot();
   }
 
-  // ===== سحابة: حفظ/تحميل =====
-  async function cloudSaveMonth(){
-    const payload = captureMonthForCloud();
-    setStatus("جاري الحفظ على السحابة...", false);
-
-    try{
-      await fetch(SHEET_API_URL, {
-        method: "POST",
-        body: JSON.stringify(payload)
-      });
-      setStatus("✅ تم الحفظ على السحابة", false);
-    }catch(err){
-      console.error(err);
-      setStatus("❌ فشل الحفظ على السحابة (تحقق من الرابط/الانترنت)", true);
-      throw err;
-    }
+  function saveMonthInternal(monthKey){
+    const store = loadStore();
+    store.global.savingsBalance = n("savingsBalance");
+    store.global.reserveBalance = n("reserveBalance");
+    store.months[monthKey] = captureMonth();
+    store._lastMonthKey = monthKey;
+    saveStore(store);
   }
 
-  async function cloudLoadMonth(monthKey){
-    setStatus("جاري تحميل الشهر من السحابة...", false);
-    const url = `${SHEET_API_URL}?action=get&month=${encodeURIComponent(monthKey)}`;
-
-    try{
-      const res = await fetch(url);
-      const js = await res.json();
-      if(!js.ok){
-        setStatus("❌ خطأ من السيرفر: " + (js.error || "غير معروف"), true);
-        return { found: false };
-      }
-      if(!js.found){
-        setStatus("ℹ️ لا توجد بيانات لهذا الشهر على السحابة (نموذج فارغ).", false);
-        return { found: false };
-      }
-      setStatus("✅ تم تحميل بيانات الشهر من السحابة", false);
-      return { found: true, data: js.data };
-    }catch(err){
-      console.error(err);
-      setStatus("❌ فشل تحميل البيانات (تحقق من الرابط/الانترنت)", true);
-      return { found: false, error: true };
-    }
+  function loadMonthInternal(monthKey){
+    const store = loadStore();
+    setVal("savingsBalance", store.global?.savingsBalance ?? 0);
+    setVal("reserveBalance", store.global?.reserveBalance ?? 0);
+    if(store.months && store.months[monthKey]) applyMonthData(store.months[monthKey]);
+    else clearMonthForm();
+    calc();
   }
 
-  // ===== أزرار =====
   async function saveMonth(){
-    saveLocalSnapshot();
-    await cloudSaveMonth();
-    alert("تم حفظ الشهر على السحابة ☁️");
+    const mk = currentMonthKey();
+    saveMonthInternal(mk);
+    await cloudSave(mk);
+    alert("تم حفظ الشهر: " + mk);
   }
 
   async function loadMonth(){
     const mk = currentMonthKey();
-    const r = await cloudLoadMonth(mk);
-    if(r.found) applyCloudDataToForm(r.data);
-    else clearMonthForm();
+    // حاول من السحابة، وإذا فشل حمّل محلي
+    const ok = await cloudLoad(mk);
+    if(!ok) loadMonthInternal(mk);
     alert("تم تحميل الشهر: " + mk);
   }
 
   async function startNewMonth(){
-    // نحفظ الشهر الحالي أولاً
-    await saveMonth();
-
     const mk = currentMonthKey();
+    saveMonthInternal(mk);
+    await cloudSave(mk);
+
     const next = monthPlusOne(mk);
     el("monthKey").value = next;
 
-    // نحاول تحميل الشهر الجديد (قد يكون موجود) وإلا نفرّغ
-    const r = await cloudLoadMonth(next);
-    if(r.found) applyCloudDataToForm(r.data);
-    else clearMonthForm();
+    clearMonthForm();
+    saveMonthInternal(next);
+    await cloudSave(next);
 
-    alert("تم بدء شهر: " + next);
+    alert("تم بدء شهر جديد: " + next);
+  }
+
+  // ✅ حفظ فوري: محلي + رفع سحابي مباشرة
+  function scheduleSaveAndCalc(){
+    calc();
+    const mk = currentMonthKey();
+    saveMonthInternal(mk);
+    cloudSave(mk);
   }
 
   async function onMonthChange(){
-    const mk = currentMonthKey();
-    const r = await cloudLoadMonth(mk);
-    if(r.found) applyCloudDataToForm(r.data);
-    else clearMonthForm();
-  }
-
-  // ===== نسخة محلية للنسخ الاحتياطي =====
-  function saveLocalSnapshot(){
     const store = loadStore();
+    const prev = store._lastMonthKey || getThisMonth();
+    saveMonthInternal(prev);
+    await cloudSave(prev);
+
     const mk = currentMonthKey();
+    const ok = await cloudLoad(mk);
+    if(!ok) loadMonthInternal(mk);
 
-    store.global.savingsBalance = n("savingsBalance");
-    store.global.reserveBalance = n("reserveBalance");
-
-    // نخزن نسخة محلية
-    store.months[mk] = {
-      savedAt: new Date().toISOString(),
-      fields: {
-        salary1: n("salary1"),
-        salary2: n("salary2"),
-        nursery: n("nursery"),
-        school: n("school"),
-        babyClothes: n("babyClothes"),
-        babyMilk: n("babyMilk"),
-        babyDiapers: n("babyDiapers"),
-        phone: n("phone"),
-        home: n("home"),
-        secondary: n("secondary"),
-        other: n("other"),
-        savingsAdd: n("savingsAdd"),
-        reserveAdd: n("reserveAdd"),
-      },
-      extraExpenses: getExtraExpensesList()
-    };
-
-    store._lastMonthKey = mk;
-    saveStore(store);
+    const s2 = loadStore();
+    s2._lastMonthKey = mk;
+    saveStore(s2);
   }
 
+  // ===== نسخ احتياطي محلي =====
   function exportBackup(){
-    saveLocalSnapshot();
+    const mk = currentMonthKey();
+    saveMonthInternal(mk);
     const store = loadStore();
+
     const blob = new Blob([JSON.stringify(store, null, 2)], {type:"application/json"});
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -652,19 +638,23 @@
     URL.revokeObjectURL(url);
   }
 
-  function triggerImport(){
-    el("importFile").click();
-  }
+  function triggerImport(){ el("importFile").click(); }
 
   function handleImportFile(file){
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       try{
         const parsed = JSON.parse(String(reader.result || ""));
         if(!parsed || typeof parsed !== "object") throw new Error("invalid json");
+        if(!parsed.months || !parsed.global) throw new Error("missing keys");
         localStorage.setItem(STORE_KEY, JSON.stringify(parsed));
-        initLocalOnly(); // يعرض المحلي
-        alert("تم استيراد النسخة المحلية بنجاح.");
+        const mk = currentMonthKey();
+        const s = loadStore();
+        s._lastMonthKey = mk;
+        saveStore(s);
+        loadMonthInternal(mk);
+        await cloudSave(mk);
+        alert("تم استيراد النسخة بنجاح.");
       }catch(e){
         alert("فشل الاستيراد: الملف غير صحيح.");
       }
@@ -672,75 +662,25 @@
     reader.readAsText(file);
   }
 
-  function clearAllLocal(){
-    if(!confirm("تأكيد: مسح النسخة المحلية فقط؟ (السحابة لا تتأثر)")) return;
+  function clearAllData(){
+    if(!confirm("تأكيد: مسح كل البيانات (الشهور + الادخار/الاحتياط + كل شيء)؟")) return;
     localStorage.removeItem(STORE_KEY);
-    initLocalOnly();
+    init();
   }
 
-  // ===== تهيئة محلية فقط (للنسخ الاحتياطي) =====
-  function initLocalOnly(){
+  function init(){
     el("monthKey").value = getThisMonth();
-
     const store = loadStore();
-    setVal("savingsBalance", store.global?.savingsBalance ?? 0);
-    setVal("reserveBalance", store.global?.reserveBalance ?? 0);
+    if(!store._lastMonthKey) store._lastMonthKey = el("monthKey").value;
+    saveStore(store);
 
-    const mk = currentMonthKey();
-    const local = store.months && store.months[mk] ? store.months[mk] : null;
+    loadMonthInternal(currentMonthKey());
 
-    if(local){
-      const f = local.fields || {};
-      setVal("salary1", f.salary1 ?? 0);
-      setVal("salary2", f.salary2 ?? 0);
-      setVal("nursery", f.nursery ?? 0);
-      setVal("school", f.school ?? 0);
-      setVal("babyClothes", f.babyClothes ?? 0);
-      setVal("babyMilk", f.babyMilk ?? 0);
-      setVal("babyDiapers", f.babyDiapers ?? 0);
-      setVal("phone", f.phone ?? 0);
-      setVal("home", f.home ?? 0);
-      setVal("secondary", f.secondary ?? 0);
-      setVal("other", f.other ?? 0);
-      setVal("savingsAdd", f.savingsAdd ?? 0);
-      setVal("reserveAdd", f.reserveAdd ?? 0);
-
-      el("extraExpenses").innerHTML = "";
-      (local.extraExpenses || []).forEach(x => addExpenseRow(x.name || "", Number(x.amount)||0));
-    } else {
-      clearMonthForm();
-    }
-
-    calc();
-  }
-
-  // ===== init =====
-  async function init(){
-    // أول ما يفتح: نحدد الشهر الحالي
-    el("monthKey").value = getThisMonth();
-
-    // نهيئ النسخة المحلية (للنسخ الاحتياطي) ونعرض رصيد الادخار/الاحتياط المحلي
-    const store = loadStore();
-    setVal("savingsBalance", store.global?.savingsBalance ?? 0);
-    setVal("reserveBalance", store.global?.reserveBalance ?? 0);
-
-    // حاول تحميل الشهر من السحابة
-    const mk = currentMonthKey();
-    const r = await cloudLoadMonth(mk);
-    if(r.found) applyCloudDataToForm(r.data);
-    else {
-      // إذا ماكو سحابة، نعرض المحلي إن وجد
-      initLocalOnly();
-    }
-
-    // listeners
     const ids = [
       ...MONTH_FIELDS,
-      "savingsBalance","reserveBalance",
-      "reserveWithdraw"
+      "savingsBalance","reserveBalance","reserveWithdraw"
     ];
-    ids.forEach(id => el(id)?.addEventListener("input", () => scheduleCalc(false)));
-
+    ids.forEach(id => el(id)?.addEventListener("input", scheduleSaveAndCalc));
     el("monthKey").addEventListener("change", onMonthChange);
 
     el("importFile").addEventListener("change", (e) => {
@@ -749,6 +689,8 @@
       e.target.value = "";
     });
 
+    // اختبار بسيط للاتصال
+    fetch(API_URL).then(()=>setCloud(true,"جاهز")).catch(()=>setCloud(false,"ممنوع/CORS"));
     calc();
   }
 
@@ -757,23 +699,18 @@
   // expose
   window.addExpenseRow = addExpenseRow;
   window.clearExtraExpenses = clearExtraExpenses;
-
   window.applySavings = applySavings;
   window.resetSavingsAdd = resetSavingsAdd;
-
   window.applyReserve = applyReserve;
   window.resetReserveAdd = resetReserveAdd;
-
   window.withdrawReserve = withdrawReserve;
   window.resetReserveWithdraw = resetReserveWithdraw;
-
   window.saveMonth = saveMonth;
   window.loadMonth = loadMonth;
   window.startNewMonth = startNewMonth;
-
   window.exportBackup = exportBackup;
   window.triggerImport = triggerImport;
-  window.clearAllLocal = clearAllLocal;
+  window.clearAllData = clearAllData;
 </script>
 
 </body>
