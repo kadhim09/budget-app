@@ -24,6 +24,8 @@
     .line { border: none; border-top: 1px solid #eee; margin: 14px 0; }
     .expense-row { display:grid; grid-template-columns: 1.2fr 1fr auto; gap:10px; align-items:end; }
     .expense-row .remove { padding: 10px 12px; }
+    .status { font-size: 13px; color: #0a6; margin-top: 8px; }
+    .status.err { color: #b00020; }
     @media (max-width: 760px) {
       .grid, .grid3 { grid-template-columns: 1fr; }
       .expense-row { grid-template-columns: 1fr; }
@@ -39,46 +41,31 @@
     <div class="muted">الدخل الكلي يُحسب تلقائيًا، وكل المصاريف تُخصم منه. (سحب الاحتياط لا يؤثر على الدخل)</div>
   </div>
 
-
   <div class="card" id="monthCard">
     <h3>إدارة الشهور والنسخ الاحتياطي</h3>
 
-    <div>
-      <label>الشهر</label>
-      <input id="monthKey" type="month">
-      <div class="muted">كل شهر ينحفظ وحده. عند تبديل الشهر أو بدء شهر جديد، راح ينخزن الشهر السابق تلقائيًا.</div>
-    </div>
-
-    <div style="margin-top:10px">
-      <label>إجراءات</label>
-      <div class="btns" style="margin-top:0">
-        <button type="button" onclick="saveMonth()">حفظ هذا الشهر</button>
-        <button type="button" onclick="loadMonth()">تحميل هذا الشهر</button>
-        <button type="button" onclick="startNewMonth()">بدء شهر جديد</button>
-        <button type="button" onclick="exportBackup()">تصدير نسخة احتياطية</button>
-        <button type="button" onclick="triggerImport()">استيراد نسخة</button>
-        <button type="button" onclick="clearAllData()">مسح كل البيانات</button>
+    <div class="grid">
+      <div>
+        <label>الشهر</label>
+        <input id="monthKey" type="month">
+        <div class="muted">كل شهر ينحفظ وحده. عند تبديل الشهر، راح يحاول يحمّل بياناته من السحابة.</div>
       </div>
-      <input id="importFile" type="file" accept="application/json" style="display:none" />
-      <div class="muted">ملاحظة: الادخار/الاحتياط (الرصيد الحالي) يبقى متراكم لكل الشهور، أما "إضافة هذا الشهر" تنحفظ ضمن الشهر.</div>
-    </div>
-  </div>
       <div>
         <label>إجراءات</label>
         <div class="btns" style="margin-top:0">
-          <button type="button" onclick="saveMonth()">حفظ هذا الشهر</button>
-          <button type="button" onclick="loadMonth()">تحميل هذا الشهر</button>
+          <button type="button" onclick="saveMonth()">حفظ هذا الشهر (سحابة)</button>
+          <button type="button" onclick="loadMonth()">تحميل هذا الشهر (سحابة)</button>
           <button type="button" onclick="startNewMonth()">بدء شهر جديد</button>
           <button type="button" onclick="exportBackup()">تصدير نسخة احتياطية</button>
           <button type="button" onclick="triggerImport()">استيراد نسخة</button>
-          <button type="button" onclick="clearAllData()">مسح كل البيانات</button>
+          <button type="button" onclick="clearAllLocal()">مسح النسخة المحلية فقط</button>
         </div>
         <input id="importFile" type="file" accept="application/json" style="display:none" />
-        <div class="muted">ملاحظة: الادخار/الاحتياط (الرصيد الحالي) يبقى متراكم لكل الشهور، أما "إضافة هذا الشهر" تنحفظ ضمن الشهر.</div>
+        <div class="muted">ملاحظة: النسخة الاحتياطية تخص النسخة المحلية. السحابة هي الأساس للمزامنة بين الأجهزة.</div>
+        <div id="cloudStatus" class="status"></div>
       </div>
     </div>
   </div>
-
 
   <!-- الدخل -->
   <div class="card">
@@ -86,11 +73,11 @@
     <div class="grid">
       <div>
         <label>الراتب الأول</label>
-        <input id="salary1" type="number" value="" min="" step="1000">
+        <input id="salary1" type="number" value="0" min="0" step="1000">
       </div>
       <div>
         <label>الراتب الثاني</label>
-        <input id="salary2" type="number" value="" min="" step="1000">
+        <input id="salary2" type="number" value="0" min="0" step="1000">
       </div>
     </div>
 
@@ -109,11 +96,11 @@
     <div class="grid">
       <div>
         <label>مصاريف روضة</label>
-        <input id="nursery" type="number" value="" min="" step="1000">
+        <input id="nursery" type="number" value="0" min="0" step="1000">
       </div>
       <div>
         <label>مصاريف مدرسة</label>
-        <input id="school" type="number" value="" min="" step="1000">
+        <input id="school" type="number" value="0" min="0" step="1000">
       </div>
     </div>
   </div>
@@ -124,15 +111,15 @@
     <div class="grid3">
       <div>
         <label>ملابس</label>
-        <input id="babyClothes" type="number" value="" min="" step="1000">
+        <input id="babyClothes" type="number" value="0" min="0" step="1000">
       </div>
       <div>
         <label>حليب</label>
-        <input id="babyMilk" type="number" value="" min="" step="1000">
+        <input id="babyMilk" type="number" value="0" min="0" step="1000">
       </div>
       <div>
         <label>حفاظات</label>
-        <input id="babyDiapers" type="number" value="" min="" step="1000">
+        <input id="babyDiapers" type="number" value="0" min="0" step="1000">
       </div>
     </div>
   </div>
@@ -143,19 +130,19 @@
     <div class="grid">
       <div>
         <label>مصاريف رصيد</label>
-        <input id="phone" type="number" value="" min="" step="1000">
+        <input id="phone" type="number" value="0" min="0" step="1000">
       </div>
       <div>
         <label>مصاريف بيت</label>
-        <input id="home" type="number" value="" min="" step="1000">
+        <input id="home" type="number" value="0" min="0" step="1000">
       </div>
       <div>
         <label>مصاريف ثانوية</label>
-        <input id="secondary" type="number" value="" min="" step="1000">
+        <input id="secondary" type="number" value="0" min="0" step="1000">
       </div>
       <div>
         <label>حقل إضافي (أي مصروف آخر)</label>
-        <input id="other" type="number" value="" min="" step="1000">
+        <input id="other" type="number" value="0" min="0" step="1000">
       </div>
     </div>
 
@@ -179,16 +166,16 @@
 
   <!-- ادخار واحتياط -->
   <div class="card">
-    <h3>الادخار والاحتياط (تراكم)</h3>
+    <h3>الادخار والاحتياط</h3>
 
     <div class="grid">
       <div>
-        <label>ادخار: الرصيد الحالي (يتراكم)</label>
-        <input id="savingsBalance" type="number" value="" min="" step="1000">
+        <label>ادخار: الرصيد الحالي (محلي)</label>
+        <input id="savingsBalance" type="number" value="0" min="0" step="1000">
       </div>
       <div>
         <label>ادخار: إضافة هذا الشهر</label>
-        <input id="savingsAdd" type="number" value="" min="" step="1000">
+        <input id="savingsAdd" type="number" value="0" min="0" step="1000">
         <div class="btns">
           <button type="button" onclick="applySavings()">أضف إلى الادخار</button>
           <button type="button" onclick="resetSavingsAdd()">تصفير إضافة الادخار</button>
@@ -200,12 +187,12 @@
 
     <div class="grid">
       <div>
-        <label>احتياط: الرصيد الحالي (يتراكم)</label>
-        <input id="reserveBalance" type="number" value="" min="" step="1000">
+        <label>احتياط: الرصيد الحالي (محلي)</label>
+        <input id="reserveBalance" type="number" value="0" min="0" step="1000">
       </div>
       <div>
         <label>احتياط: إضافة هذا الشهر</label>
-        <input id="reserveAdd" type="number" value="" min="" step="1000">
+        <input id="reserveAdd" type="number" value="0" min="0" step="1000">
         <div class="btns">
           <button type="button" onclick="applyReserve()">أضف إلى الاحتياط</button>
           <button type="button" onclick="resetReserveAdd()">تصفير إضافة الاحتياط</button>
@@ -215,18 +202,17 @@
 
     <hr class="line">
 
-    <!-- سحب من الاحتياط -->
     <div class="grid">
       <div>
         <label>سحب من الاحتياط (لا يؤثر على الدخل الكلي)</label>
-        <input id="reserveWithdraw" type="number" value="" min="" step="1000">
+        <input id="reserveWithdraw" type="number" value="0" min="0" step="1000">
         <div class="btns">
           <button type="button" onclick="withdrawReserve()">سحب</button>
           <button type="button" onclick="resetReserveWithdraw()">تصفير السحب</button>
         </div>
       </div>
       <div class="muted">
-        هذا السحب ينقص من رصيد الاحتياط المتراكم فقط، ولا يدخل ضمن المصاريف الشهرية.
+        هذا السحب ينقص من رصيد الاحتياط المحلي فقط، ولا يدخل ضمن المصاريف الشهرية.
       </div>
     </div>
 
@@ -252,6 +238,9 @@
 </div>
 
 <script>
+  // ✅ رابط الـ Apps Script Web App
+  const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbwDJnWqWnkREdP_his-iaLm3I_-HJXLQ_oiLarMmz5_sZruMepwpvSK092u3ZgQ8q-zuQ/exec";
+
   // ===== أدوات عامة =====
   const el = (id) => document.getElementById(id);
   function nVal(input){ return Number(input?.value) || 0; }
@@ -261,16 +250,20 @@
     const x = Math.round(Number(v) || 0);
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + " د.ع";
   }
+  function setStatus(msg, isErr=false){
+    const s = el("cloudStatus");
+    if(!s) return;
+    s.textContent = msg || "";
+    s.className = "status" + (isErr ? " err" : "");
+  }
 
-  // ===== تخزين =====
-  const STORE_KEY = "budget_monthly_store_v1";
-
+  // ===== نسخة محلية (للنسخ الاحتياطي فقط) =====
+  const STORE_KEY = "budget_local_store_v2";
   function loadStore(){
     try{
       const raw = localStorage.getItem(STORE_KEY);
       if(!raw) return { global: { savingsBalance: 0, reserveBalance: 0 }, months: {} };
       const s = JSON.parse(raw);
-      if(!s || typeof s !== "object") throw new Error("bad store");
       s.global = s.global || { savingsBalance: 0, reserveBalance: 0 };
       s.months = s.months || {};
       return s;
@@ -278,7 +271,6 @@
       return { global: { savingsBalance: 0, reserveBalance: 0 }, months: {} };
     }
   }
-
   function saveStore(store){
     localStorage.setItem(STORE_KEY, JSON.stringify(store));
   }
@@ -288,12 +280,10 @@
     const mm = String(d.getMonth()+1).padStart(2,"0");
     return `${d.getFullYear()}-${mm}`;
   }
-
   function currentMonthKey(){
     const v = el("monthKey")?.value;
     return v && /^\d{4}-\d{2}$/.test(v) ? v : getThisMonth();
   }
-
   function monthPlusOne(ym){
     const [y,m] = ym.split("-").map(Number);
     const d = new Date(y, m-1, 1);
@@ -317,7 +307,7 @@
     nameInput.type = "text";
     nameInput.placeholder = "مثال: صيانة / علاج / ملابس";
     nameInput.value = nameVal || "";
-    nameInput.addEventListener("input", () => scheduleSaveAndCalc());
+    nameInput.addEventListener("input", () => scheduleCalc());
     nameBox.appendChild(nameLabel);
     nameBox.appendChild(nameInput);
 
@@ -329,7 +319,7 @@
     amountInput.min = "0";
     amountInput.step = "1000";
     amountInput.value = String(amountVal || 0);
-    amountInput.addEventListener("input", () => scheduleSaveAndCalc());
+    amountInput.addEventListener("input", () => scheduleCalc());
     amountBox.appendChild(amountLabel);
     amountBox.appendChild(amountInput);
 
@@ -340,7 +330,7 @@
     removeBtn.textContent = "حذف";
     removeBtn.addEventListener("click", () => {
       row.remove();
-      scheduleSaveAndCalc(true);
+      scheduleCalc(true);
     });
     btnBox.appendChild(removeBtn);
 
@@ -362,19 +352,18 @@
         amount: nVal(r._amountInput)
       });
     });
-    return list;
+    // remove empty rows
+    return list.filter(x => x.name || (Number(x.amount)||0) > 0);
   }
-
   function getExtraExpensesTotal(){
     return getExtraExpensesList().reduce((a,b)=>a+(Number(b.amount)||0), 0);
   }
-
   function clearExtraExpenses(){
     el("extraExpenses").innerHTML = "";
-    scheduleSaveAndCalc(true);
+    scheduleCalc(true);
   }
 
-  // ===== الحساب الرئيسي =====
+  // ===== الحساب =====
   function calc(){
     const income = n("salary1") + n("salary2");
     el("totalIncome").value = fmt(income);
@@ -383,7 +372,6 @@
     const baby = n("babyClothes") + n("babyMilk") + n("babyDiapers");
     const general = n("phone") + n("home") + n("secondary") + n("other");
 
-    // ادخار/احتياط الشهري (إضافة هذا الشهر) تدخل ضمن المصاريف
     const monthlySavings = n("savingsAdd");
     const monthlyReserve = n("reserveAdd");
 
@@ -406,55 +394,62 @@
     el("reserveDisplay").textContent = fmt(n("reserveBalance"));
   }
 
-  // ===== تراكم الادخار =====
+  let calcTimer = null;
+  function scheduleCalc(immediate=false){
+    if(immediate){ calc(); return; }
+    clearTimeout(calcTimer);
+    calcTimer = setTimeout(calc, 200);
+  }
+
+  // ===== ادخار/احتياط محلي =====
   function applySavings(){
     const add = n("savingsAdd");
     if(add <= 0) return;
     setVal("savingsBalance", n("savingsBalance") + add);
     setVal("savingsAdd", 0);
-    scheduleSaveAndCalc(true);
+    saveLocalSnapshot();
+    calc();
   }
   function resetSavingsAdd(){
     setVal("savingsAdd", 0);
-    scheduleSaveAndCalc(true);
+    saveLocalSnapshot();
+    calc();
   }
-
-  // ===== تراكم الاحتياط =====
   function applyReserve(){
     const add = n("reserveAdd");
     if(add <= 0) return;
     setVal("reserveBalance", n("reserveBalance") + add);
     setVal("reserveAdd", 0);
-    scheduleSaveAndCalc(true);
+    saveLocalSnapshot();
+    calc();
   }
   function resetReserveAdd(){
     setVal("reserveAdd", 0);
-    scheduleSaveAndCalc(true);
+    saveLocalSnapshot();
+    calc();
   }
-
-  // ===== سحب من الاحتياط (لا يؤثر على الدخل) =====
   function withdrawReserve(){
     const w = n("reserveWithdraw");
     if(w <= 0) return;
 
     const current = n("reserveBalance");
     const newBal = current - w;
-
     if(newBal < 0){
       alert("المبلغ أكبر من رصيد الاحتياط الحالي.");
       return;
     }
-
     setVal("reserveBalance", newBal);
     setVal("reserveWithdraw", 0);
-    scheduleSaveAndCalc(true);
+    saveLocalSnapshot();
+    calc();
   }
   function resetReserveWithdraw(){
     setVal("reserveWithdraw", 0);
-    scheduleSaveAndCalc(true);
+    saveLocalSnapshot();
+    calc();
   }
 
-  // ===== الشهرية =====
+  // ===== الحقول الشهرية =====
   const MONTH_FIELDS = [
     "salary1","salary2",
     "nursery","school",
@@ -463,31 +458,63 @@
     "savingsAdd","reserveAdd"
   ];
 
-  function getMonthSummary(){
-    const income = n("salary1") + n("salary2");
-    const edu = n("nursery") + n("school");
-    const baby = n("babyClothes") + n("babyMilk") + n("babyDiapers");
-    const general = n("phone") + n("home") + n("secondary") + n("other");
-    const extra = getExtraExpensesTotal();
-    const expenses = edu + baby + general + n("savingsAdd") + n("reserveAdd") + extra;
-    return { income, expenses, left: income-expenses };
+  function captureMonthForCloud(){
+    const mk = currentMonthKey();
+    const extraList = getExtraExpensesList();
+    const extraTotal = getExtraExpensesTotal();
+
+    return {
+      month: mk,
+      salary1: n("salary1"),
+      salary2: n("salary2"),
+      nursery: n("nursery"),
+      school: n("school"),
+      baby_clothes: n("babyClothes"),
+      baby_milk: n("babyMilk"),
+      diapers: n("babyDiapers"),
+      phone: n("phone"),
+      home: n("home"),
+      secondary: n("secondary"),
+      other: n("other"),
+      savings_add: n("savingsAdd"),
+      reserve_add: n("reserveAdd"),
+      // نخزن قائمة المصاريف الإضافية كـ JSON داخل extra_name
+      extra_name: JSON.stringify(extraList),
+      // ونخزن مجموعها داخل extra_amount
+      extra_amount: extraTotal
+    };
   }
 
-  function captureMonth(){
-    const data = {};
-    MONTH_FIELDS.forEach(id => data[id] = n(id));
-    data.extraExpenses = getExtraExpensesList();
-    data.savedAt = new Date().toISOString();
-    data.summary = getMonthSummary();
-    return data;
-  }
+  function applyCloudDataToForm(data){
+    setVal("salary1", data.salary1 || 0);
+    setVal("salary2", data.salary2 || 0);
+    setVal("nursery", data.nursery || 0);
+    setVal("school", data.school || 0);
 
-  function applyMonthData(data){
-    MONTH_FIELDS.forEach(id => setVal(id, (data?.[id] ?? 0)));
+    setVal("babyClothes", data.baby_clothes || 0);
+    setVal("babyMilk", data.baby_milk || 0);
+    setVal("babyDiapers", data.diapers || 0);
+
+    setVal("phone", data.phone || 0);
+    setVal("home", data.home || 0);
+    setVal("secondary", data.secondary || 0);
+    setVal("other", data.other || 0);
+
+    setVal("savingsAdd", data.savings_add || 0);
+    setVal("reserveAdd", data.reserve_add || 0);
+
+    // extra list from JSON stored in extra_name
     el("extraExpenses").innerHTML = "";
-    (data?.extraExpenses || []).forEach(x => addExpenseRow(x.name || "", Number(x.amount)||0));
+    try{
+      const list = JSON.parse(data.extra_name || "[]");
+      (Array.isArray(list) ? list : []).forEach(x => addExpenseRow(x.name || "", Number(x.amount)||0));
+    }catch(_e){
+      // لو صار خلل، ما نكسر البرنامج
+    }
+
     setVal("reserveWithdraw", 0);
     calc();
+    saveLocalSnapshot();
   }
 
   function clearMonthForm(){
@@ -495,97 +522,125 @@
     el("extraExpenses").innerHTML = "";
     setVal("reserveWithdraw", 0);
     calc();
+    saveLocalSnapshot();
   }
 
-  function saveMonthInternal(monthKey){
-    const store = loadStore();
-    store.global.savingsBalance = n("savingsBalance");
-    store.global.reserveBalance = n("reserveBalance");
-    store.months[monthKey] = captureMonth();
-    store._lastMonthKey = monthKey;
-    saveStore(store);
-  }
+  // ===== سحابة: حفظ/تحميل =====
+  async function cloudSaveMonth(){
+    const payload = captureMonthForCloud();
+    setStatus("جاري الحفظ على السحابة...", false);
 
-  function loadMonthInternal(monthKey){
-    const store = loadStore();
-    setVal("savingsBalance", store.global?.savingsBalance ?? 0);
-    setVal("reserveBalance", store.global?.reserveBalance ?? 0);
-
-    if(store.months && store.months[monthKey]){
-      applyMonthData(store.months[monthKey]);
-    }else{
-      clearMonthForm();
+    try{
+      await fetch(SHEET_API_URL, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+      setStatus("✅ تم الحفظ على السحابة", false);
+    }catch(err){
+      console.error(err);
+      setStatus("❌ فشل الحفظ على السحابة (تحقق من الرابط/الانترنت)", true);
+      throw err;
     }
-    calc();
   }
 
-  function saveMonth(){
-    const mk = currentMonthKey();
-    saveMonthInternal(mk);
-    alert("تم حفظ الشهر: " + mk);
+  async function cloudLoadMonth(monthKey){
+    setStatus("جاري تحميل الشهر من السحابة...", false);
+    const url = `${SHEET_API_URL}?action=get&month=${encodeURIComponent(monthKey)}`;
+
+    try{
+      const res = await fetch(url);
+      const js = await res.json();
+      if(!js.ok){
+        setStatus("❌ خطأ من السيرفر: " + (js.error || "غير معروف"), true);
+        return { found: false };
+      }
+      if(!js.found){
+        setStatus("ℹ️ لا توجد بيانات لهذا الشهر على السحابة (نموذج فارغ).", false);
+        return { found: false };
+      }
+      setStatus("✅ تم تحميل بيانات الشهر من السحابة", false);
+      return { found: true, data: js.data };
+    }catch(err){
+      console.error(err);
+      setStatus("❌ فشل تحميل البيانات (تحقق من الرابط/الانترنت)", true);
+      return { found: false, error: true };
+    }
   }
 
-  function loadMonth(){
+  // ===== أزرار =====
+  async function saveMonth(){
+    saveLocalSnapshot();
+    await cloudSaveMonth();
+    alert("تم حفظ الشهر على السحابة ☁️");
+  }
+
+  async function loadMonth(){
     const mk = currentMonthKey();
-    loadMonthInternal(mk);
+    const r = await cloudLoadMonth(mk);
+    if(r.found) applyCloudDataToForm(r.data);
+    else clearMonthForm();
     alert("تم تحميل الشهر: " + mk);
   }
 
-  function startNewMonth(){
-    const mk = currentMonthKey();
-    // احفظ الشهر الحالي قبل الانتقال
-    saveMonthInternal(mk);
+  async function startNewMonth(){
+    // نحفظ الشهر الحالي أولاً
+    await saveMonth();
 
+    const mk = currentMonthKey();
     const next = monthPlusOne(mk);
     el("monthKey").value = next;
 
-    // ابدأ شهر جديد: صفّر حقول الشهر فقط، وخلي الرصيد المتراكم مثل ما هو
-    clearMonthForm();
-    setVal("savingsAdd", 0);
-    setVal("reserveAdd", 0);
+    // نحاول تحميل الشهر الجديد (قد يكون موجود) وإلا نفرّغ
+    const r = await cloudLoadMonth(next);
+    if(r.found) applyCloudDataToForm(r.data);
+    else clearMonthForm();
 
-    // خزّن فوري الشهر الجديد كقالب فارغ
-    saveMonthInternal(next);
-    alert("تم بدء شهر جديد: " + next);
+    alert("تم بدء شهر: " + next);
   }
 
-  // ===== حفظ تلقائي =====
-  let saveTimer = null;
-  function scheduleSaveAndCalc(immediate=false){
-    calc();
-    if(immediate){
-      autoSaveNow();
-      return;
-    }
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(autoSaveNow, 350);
-  }
-
-  function autoSaveNow(){
+  async function onMonthChange(){
     const mk = currentMonthKey();
-    saveMonthInternal(mk);
+    const r = await cloudLoadMonth(mk);
+    if(r.found) applyCloudDataToForm(r.data);
+    else clearMonthForm();
   }
 
-  function onMonthChange(){
+  // ===== نسخة محلية للنسخ الاحتياطي =====
+  function saveLocalSnapshot(){
     const store = loadStore();
-    const prev = store._lastMonthKey || getThisMonth();
-    // حفظ الشهر السابق قبل التحميل
-    saveMonthInternal(prev);
-
     const mk = currentMonthKey();
-    loadMonthInternal(mk);
 
-    const s2 = loadStore();
-    s2._lastMonthKey = mk;
-    saveStore(s2);
+    store.global.savingsBalance = n("savingsBalance");
+    store.global.reserveBalance = n("reserveBalance");
+
+    // نخزن نسخة محلية
+    store.months[mk] = {
+      savedAt: new Date().toISOString(),
+      fields: {
+        salary1: n("salary1"),
+        salary2: n("salary2"),
+        nursery: n("nursery"),
+        school: n("school"),
+        babyClothes: n("babyClothes"),
+        babyMilk: n("babyMilk"),
+        babyDiapers: n("babyDiapers"),
+        phone: n("phone"),
+        home: n("home"),
+        secondary: n("secondary"),
+        other: n("other"),
+        savingsAdd: n("savingsAdd"),
+        reserveAdd: n("reserveAdd"),
+      },
+      extraExpenses: getExtraExpensesList()
+    };
+
+    store._lastMonthKey = mk;
+    saveStore(store);
   }
 
-  // ===== نسخ احتياطي =====
   function exportBackup(){
-    const mk = currentMonthKey();
-    saveMonthInternal(mk);
+    saveLocalSnapshot();
     const store = loadStore();
-
     const blob = new Blob([JSON.stringify(store, null, 2)], {type:"application/json"});
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -607,14 +662,9 @@
       try{
         const parsed = JSON.parse(String(reader.result || ""));
         if(!parsed || typeof parsed !== "object") throw new Error("invalid json");
-        if(!parsed.months || !parsed.global) throw new Error("missing keys");
         localStorage.setItem(STORE_KEY, JSON.stringify(parsed));
-        const mk = currentMonthKey();
-        const s = loadStore();
-        s._lastMonthKey = mk;
-        saveStore(s);
-        loadMonthInternal(mk);
-        alert("تم استيراد النسخة بنجاح.");
+        initLocalOnly(); // يعرض المحلي
+        alert("تم استيراد النسخة المحلية بنجاح.");
       }catch(e){
         alert("فشل الاستيراد: الملف غير صحيح.");
       }
@@ -622,28 +672,74 @@
     reader.readAsText(file);
   }
 
-  function clearAllData(){
-    if(!confirm("تأكيد: مسح كل البيانات (الشهور + الادخار/الاحتياط + كل شيء)؟")) return;
+  function clearAllLocal(){
+    if(!confirm("تأكيد: مسح النسخة المحلية فقط؟ (السحابة لا تتأثر)")) return;
     localStorage.removeItem(STORE_KEY);
-    init();
+    initLocalOnly();
   }
 
-  // ===== تهيئة =====
-  function init(){
+  // ===== تهيئة محلية فقط (للنسخ الاحتياطي) =====
+  function initLocalOnly(){
     el("monthKey").value = getThisMonth();
 
     const store = loadStore();
-    if(!store._lastMonthKey) store._lastMonthKey = el("monthKey").value;
-    saveStore(store);
+    setVal("savingsBalance", store.global?.savingsBalance ?? 0);
+    setVal("reserveBalance", store.global?.reserveBalance ?? 0);
 
-    loadMonthInternal(currentMonthKey());
+    const mk = currentMonthKey();
+    const local = store.months && store.months[mk] ? store.months[mk] : null;
 
+    if(local){
+      const f = local.fields || {};
+      setVal("salary1", f.salary1 ?? 0);
+      setVal("salary2", f.salary2 ?? 0);
+      setVal("nursery", f.nursery ?? 0);
+      setVal("school", f.school ?? 0);
+      setVal("babyClothes", f.babyClothes ?? 0);
+      setVal("babyMilk", f.babyMilk ?? 0);
+      setVal("babyDiapers", f.babyDiapers ?? 0);
+      setVal("phone", f.phone ?? 0);
+      setVal("home", f.home ?? 0);
+      setVal("secondary", f.secondary ?? 0);
+      setVal("other", f.other ?? 0);
+      setVal("savingsAdd", f.savingsAdd ?? 0);
+      setVal("reserveAdd", f.reserveAdd ?? 0);
+
+      el("extraExpenses").innerHTML = "";
+      (local.extraExpenses || []).forEach(x => addExpenseRow(x.name || "", Number(x.amount)||0));
+    } else {
+      clearMonthForm();
+    }
+
+    calc();
+  }
+
+  // ===== init =====
+  async function init(){
+    // أول ما يفتح: نحدد الشهر الحالي
+    el("monthKey").value = getThisMonth();
+
+    // نهيئ النسخة المحلية (للنسخ الاحتياطي) ونعرض رصيد الادخار/الاحتياط المحلي
+    const store = loadStore();
+    setVal("savingsBalance", store.global?.savingsBalance ?? 0);
+    setVal("reserveBalance", store.global?.reserveBalance ?? 0);
+
+    // حاول تحميل الشهر من السحابة
+    const mk = currentMonthKey();
+    const r = await cloudLoadMonth(mk);
+    if(r.found) applyCloudDataToForm(r.data);
+    else {
+      // إذا ماكو سحابة، نعرض المحلي إن وجد
+      initLocalOnly();
+    }
+
+    // listeners
     const ids = [
       ...MONTH_FIELDS,
       "savingsBalance","reserveBalance",
       "reserveWithdraw"
     ];
-    ids.forEach(id => el(id)?.addEventListener("input", () => scheduleSaveAndCalc(false)));
+    ids.forEach(id => el(id)?.addEventListener("input", () => scheduleCalc(false)));
 
     el("monthKey").addEventListener("change", onMonthChange);
 
@@ -653,12 +749,12 @@
       e.target.value = "";
     });
 
-    scheduleSaveAndCalc(true);
+    calc();
   }
 
   init();
 
-  // ===== إتاحة الدوال للأزرار =====
+  // expose
   window.addExpenseRow = addExpenseRow;
   window.clearExtraExpenses = clearExtraExpenses;
 
@@ -677,7 +773,7 @@
 
   window.exportBackup = exportBackup;
   window.triggerImport = triggerImport;
-  window.clearAllData = clearAllData;
+  window.clearAllLocal = clearAllLocal;
 </script>
 
 </body>
