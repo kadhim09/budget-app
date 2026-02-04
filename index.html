@@ -58,10 +58,9 @@
     <div>
       <label>الشهر</label>
       <input id="monthKey" type="month">
-      <div class="muted">كل شهر ينحفظ وحده. عند تبديل الشهر أو بدء شهر جديد، راح ينخزن الشهر السابق تلقائيًا.</div>
+      <div class="muted">كل شهر ينحفظ وحده. عند تبديل الشهر أو بدء شهر جديد، راح ينخزن الشهر السابق محلياً (بدون كلاود) تلقائيًا.</div>
     </div>
 
-    <!-- خليت الإجراءات تحت الشهر مثل ما تريد -->
     <div style="margin-top:12px">
       <label>إجراءات</label>
       <div class="btns" style="margin-top:6px">
@@ -79,7 +78,6 @@
         ملاحظة: الادخار/الاحتياط (الرصيد الحالي) يبقى متراكم لكل الشهور، أما "إضافة هذا الشهر" تنحفظ ضمن الشهر.
       </div>
 
-      <!-- الحالة تحت الإجراءات -->
       <div class="status">
         <span class="pill" id="cloudState"><span class="dot"></span> Cloud: جاري التحقق...</span>
         <span class="pill" id="saveState"><span class="dot"></span> حفظ: جاهز</span>
@@ -253,7 +251,7 @@
 
 <script>
   // ===========================
-  // إعدادات الكلاود (Google Apps Script WebApp)
+  // رابط الكلاود (Google Apps Script WebApp)
   // ===========================
   const CLOUD_URL = "https://script.google.com/macros/s/AKfycbyVaxFmzT3Fs-hFtYpcP_38seILo3tyw1iN8kuT2luhFwCpIqzRMutMJgMDIJaEmIVk1g/exec";
 
@@ -318,7 +316,7 @@
   }
 
   // ===== تخزين محلي =====
-  const STORE_KEY = "budget_monthly_store_v2";
+  const STORE_KEY = "budget_monthly_store_v3_manual_save";
 
   function loadStore(){
     try{
@@ -357,6 +355,10 @@
     return `${d.getFullYear()}-${mm}`;
   }
 
+  function markDirty(){
+    setSaveState("حفظ: تغييرات غير محفوظة", false);
+  }
+
   // ===== مصاريف إضافية =====
   function addExpenseRow(nameVal="", amountVal=0){
     const wrap = el("extraExpenses");
@@ -372,7 +374,7 @@
     nameInput.type = "text";
     nameInput.placeholder = "مثال: صيانة / علاج / ملابس";
     nameInput.value = nameVal || "";
-    nameInput.addEventListener("input", () => scheduleSaveAndCalc());
+    nameInput.addEventListener("input", () => { calc(); markDirty(); });
     nameBox.appendChild(nameLabel);
     nameBox.appendChild(nameInput);
 
@@ -384,7 +386,7 @@
     amountInput.min = "0";
     amountInput.step = "1000";
     amountInput.value = String(amountVal || 0);
-    amountInput.addEventListener("input", () => scheduleSaveAndCalc());
+    amountInput.addEventListener("input", () => { calc(); markDirty(); });
     amountBox.appendChild(amountLabel);
     amountBox.appendChild(amountInput);
 
@@ -395,7 +397,8 @@
     removeBtn.textContent = "حذف";
     removeBtn.addEventListener("click", () => {
       row.remove();
-      scheduleSaveAndCalc(true);
+      calc();
+      markDirty();
     });
     btnBox.appendChild(removeBtn);
 
@@ -406,6 +409,9 @@
     row.appendChild(amountBox);
     row.appendChild(btnBox);
     wrap.appendChild(row);
+
+    calc();
+    markDirty();
   }
 
   function getExtraExpensesList(){
@@ -426,7 +432,8 @@
 
   function clearExtraExpenses(){
     el("extraExpenses").innerHTML = "";
-    scheduleSaveAndCalc(true);
+    calc();
+    markDirty();
   }
 
   // ===== الحساب =====
@@ -465,18 +472,20 @@
     if(add <= 0) return;
     setVal("savingsBalance", n("savingsBalance") + add);
     setVal("savingsAdd", 0);
-    scheduleSaveAndCalc(true);
+    calc();
+    markDirty();
   }
-  function resetSavingsAdd(){ setVal("savingsAdd", 0); scheduleSaveAndCalc(true); }
+  function resetSavingsAdd(){ setVal("savingsAdd", 0); calc(); markDirty(); }
 
   function applyReserve(){
     const add = n("reserveAdd");
     if(add <= 0) return;
     setVal("reserveBalance", n("reserveBalance") + add);
     setVal("reserveAdd", 0);
-    scheduleSaveAndCalc(true);
+    calc();
+    markDirty();
   }
-  function resetReserveAdd(){ setVal("reserveAdd", 0); scheduleSaveAndCalc(true); }
+  function resetReserveAdd(){ setVal("reserveAdd", 0); calc(); markDirty(); }
 
   function withdrawReserve(){
     const w = n("reserveWithdraw");
@@ -486,9 +495,10 @@
     if(newBal < 0){ alert("المبلغ أكبر من رصيد الاحتياط الحالي."); return; }
     setVal("reserveBalance", newBal);
     setVal("reserveWithdraw", 0);
-    scheduleSaveAndCalc(true);
+    calc();
+    markDirty();
   }
-  function resetReserveWithdraw(){ setVal("reserveWithdraw", 0); scheduleSaveAndCalc(true); }
+  function resetReserveWithdraw(){ setVal("reserveWithdraw", 0); calc(); markDirty(); }
 
   // ===== الشهرية =====
   const MONTH_FIELDS = [
@@ -541,7 +551,6 @@
 
   // ===== Cloud عبر JSONP =====
   let cloudSaving = false;
-  let cloudPending = false;
 
   async function cloudPing(){
     try{
@@ -555,7 +564,7 @@
 
   async function cloudSaveNow(){
     const mk = currentMonthKey();
-    if(cloudSaving){ cloudPending = true; return; }
+    if(cloudSaving) return; // منع تكرار سريع
 
     cloudSaving = true;
     setCloudState("Cloud: جاري الحفظ...", true);
@@ -577,17 +586,16 @@
       const out = await jsonp(url);
       if(out && out.ok){
         setCloudState("Cloud: تم الحفظ ✅", true);
+        return true;
       }else{
         setCloudState("Cloud: فشل ❌", false);
+        return false;
       }
     }catch(e){
       setCloudState("Cloud: فشل ❌", false);
+      return false;
     }finally{
       cloudSaving = false;
-      if(cloudPending){
-        cloudPending = false;
-        cloudSaveNow();
-      }
     }
   }
 
@@ -608,7 +616,7 @@
         clearMonthForm();
       }
 
-      // حدث المحلي بعد التحميل
+      // حدّث المحلي بعد التحميل
       saveMonthInternal(monthKey);
 
       setCloudState("Cloud: متصل ✅", true);
@@ -619,12 +627,22 @@
   }
 
   // ===== أزرار =====
-  function saveMonth(){
+  async function saveMonth(){
     const mk = currentMonthKey();
+
+    // محلي
     saveMonthInternal(mk);
     setSaveState("حفظ: تم محليًا ✅", true);
-    cloudSaveNow();
-    alert("تم حفظ الشهر: " + mk);
+
+    // كلاود
+    const ok = await cloudSaveNow();
+    if(ok){
+      setSaveState("حفظ: تم ✅", true);
+      alert("تم حفظ الشهر: " + mk);
+    }else{
+      setSaveState("حفظ: فشل بالحفظ ❌", false);
+      alert("صار فشل بالحفظ بالكلاود. جرّب مرة ثانية.");
+    }
   }
 
   function loadMonth(){
@@ -634,8 +652,8 @@
 
   function startNewMonth(){
     const mk = currentMonthKey();
+    // لا نحفظ كلاود تلقائي هنا — المستخدم هو يضغط حفظ إذا يريد
     saveMonthInternal(mk);
-    cloudSaveNow();
 
     const next = monthPlusOne(mk);
     el("monthKey").value = next;
@@ -645,7 +663,8 @@
     setVal("reserveAdd", 0);
 
     saveMonthInternal(next);
-    cloudSaveNow();
+    setSaveState("حفظ: تغييرات غير محفوظة", false);
+
     alert("تم بدء شهر جديد: " + next);
   }
 
@@ -653,43 +672,16 @@
     const store = loadStore();
     const prev = store._lastMonthKey || getThisMonth();
 
+    // حفظ محلي للشهر السابق فقط (بدون كلاود)
     saveMonthInternal(prev);
-    cloudSaveNow();
 
     const mk = currentMonthKey();
     const s2 = loadStore();
     s2._lastMonthKey = mk;
     saveStore(s2);
 
+    // تحميل من الكلاود للشهر الجديد
     cloudLoadMonth(mk);
-  }
-
-  // ===== حفظ فوري (مع debounce بسيط) =====
-  let saveTimer = null;
-
-  function autoSaveNow(){
-    const mk = currentMonthKey();
-    setSaveState("حفظ: جاري...", true);
-
-    // محلي فوراً
-    saveMonthInternal(mk);
-    setSaveState("حفظ: تم ✅", true);
-
-    // كلاود
-    cloudSaveNow();
-  }
-
-  // immediate=true => يحفظ مباشرة
-  function scheduleSaveAndCalc(immediate=false){
-    calc();
-    if(immediate){
-      if(saveTimer) clearTimeout(saveTimer);
-      autoSaveNow();
-      return;
-    }
-    if(saveTimer) clearTimeout(saveTimer);
-    // 250ms حتى لا يصير ضغط كبير، بس عملياً يحس “فوري”
-    saveTimer = setTimeout(autoSaveNow, 250);
   }
 
   // ===== نسخ احتياطي =====
@@ -728,7 +720,6 @@
         loadMonthInternal(mk);
         setSaveState("حفظ: تم استيراد نسخة ✅", true);
 
-        cloudSaveNow();
         alert("تم استيراد النسخة بنجاح.");
       }catch(e){
         alert("فشل الاستيراد: الملف غير صحيح.");
@@ -754,11 +745,12 @@
     // محلي
     loadMonthInternal(currentMonthKey());
 
-    // كلاود (حتى الموبايل والكمبيوتر يتوحد)
+    // كلاود
     cloudPing().then(() => cloudLoadMonth(currentMonthKey()));
 
+    // أي تغيير بالحقل => calc فقط + علامة غير محفوظ
     const ids = [...MONTH_FIELDS,"savingsBalance","reserveBalance","reserveWithdraw"];
-    ids.forEach(id => el(id)?.addEventListener("input", () => scheduleSaveAndCalc(false)));
+    ids.forEach(id => el(id)?.addEventListener("input", () => { calc(); markDirty(); }));
 
     el("monthKey").addEventListener("change", onMonthChange);
 
