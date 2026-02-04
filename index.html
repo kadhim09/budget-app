@@ -58,14 +58,14 @@
     <div>
       <label>الشهر</label>
       <input id="monthKey" type="month">
-      <div class="muted">كل شهر ينحفظ وحده. عند تبديل الشهر أو بدء شهر جديد، راح ينخزن الشهر السابق محلياً (بدون كلاود) تلقائيًا.</div>
+      <div class="muted">كل شهر ينحفظ وحده. التبديل بين الشهور يحمل من الكلاود. الحفظ للكلاود يتم فقط عند الضغط على زر الحفظ.</div>
     </div>
 
     <div style="margin-top:12px">
       <label>إجراءات</label>
       <div class="btns" style="margin-top:6px">
-        <button type="button" onclick="saveMonth()">حفظ هذا الشهر</button>
-        <button type="button" onclick="loadMonth()">تحميل هذا الشهر</button>
+        <button type="button" onclick="saveMonth()">✅ حفظ هذا الشهر (كلاود + محلي)</button>
+        <button type="button" onclick="loadMonth()">⬇️ تحميل هذا الشهر من الكلاود</button>
         <button type="button" onclick="startNewMonth()">بدء شهر جديد</button>
         <button type="button" onclick="exportBackup()">تصدير نسخة</button>
         <button type="button" onclick="triggerImport()">استيراد نسخة</button>
@@ -85,6 +85,7 @@
     </div>
   </div>
 
+  <!-- الدخل -->
   <div class="card">
     <h3>الدخل</h3>
     <div class="grid">
@@ -107,6 +108,7 @@
     </div>
   </div>
 
+  <!-- تعليم -->
   <div class="card">
     <h3>مصاريف تعليم</h3>
     <div class="grid">
@@ -121,6 +123,7 @@
     </div>
   </div>
 
+  <!-- طفل جديد -->
   <div class="card">
     <h3>مصاريف طفل جديد</h3>
     <div class="grid3">
@@ -139,6 +142,7 @@
     </div>
   </div>
 
+  <!-- عامة -->
   <div class="card">
     <h3>مصاريف عامة</h3>
     <div class="grid">
@@ -155,15 +159,15 @@
         <input id="secondary" type="number" value="0" min="0" step="1000">
       </div>
       <div>
-        <label>حقل إضافي (أي مصروف آخر)</label>
+        <label>حقل إضافي</label>
         <input id="other" type="number" value="0" min="0" step="1000">
       </div>
     </div>
 
     <hr class="line">
 
-    <h3 style="margin-top:0">مصاريف إضافية (تضيفها أنت)</h3>
-    <div class="muted">اضغط "إضافة مصروف" حتى تضيف سطر جديد باسم ومبلغ. هذا المبلغ ينخصم من الدخل الكلي.</div>
+    <h3 style="margin-top:0">مصاريف إضافية</h3>
+    <div class="muted">تضيف سطر باسم ومبلغ.</div>
 
     <div id="extraExpenses"></div>
 
@@ -178,12 +182,13 @@
     </div>
   </div>
 
+  <!-- ادخار واحتياط -->
   <div class="card">
     <h3>الادخار والاحتياط (تراكم)</h3>
 
     <div class="grid">
       <div>
-        <label>ادخار: الرصيد الحالي (يتراكم)</label>
+        <label>ادخار: الرصيد الحالي</label>
         <input id="savingsBalance" type="number" value="0" min="0" step="1000">
       </div>
       <div>
@@ -200,7 +205,7 @@
 
     <div class="grid">
       <div>
-        <label>احتياط: الرصيد الحالي (يتراكم)</label>
+        <label>احتياط: الرصيد الحالي</label>
         <input id="reserveBalance" type="number" value="0" min="0" step="1000">
       </div>
       <div>
@@ -217,45 +222,37 @@
 
     <div class="grid">
       <div>
-        <label>سحب من الاحتياط (لا يؤثر على الدخل الكلي)</label>
+        <label>سحب من الاحتياط</label>
         <input id="reserveWithdraw" type="number" value="0" min="0" step="1000">
         <div class="btns">
           <button type="button" onclick="withdrawReserve()">سحب</button>
           <button type="button" onclick="resetReserveWithdraw()">تصفير السحب</button>
         </div>
       </div>
-      <div class="muted">
-        هذا السحب ينقص من رصيد الاحتياط المتراكم فقط، ولا يدخل ضمن المصاريف الشهرية.
-      </div>
+      <div class="muted">لا يدخل ضمن المصاريف الشهرية.</div>
     </div>
 
     <div class="row" style="margin-top:10px">
-      <div>رصيد الاحتياط الحالي بعد السحب/الإضافة</div>
+      <div>رصيد الاحتياط الحالي</div>
       <div class="ok" id="reserveDisplay">-</div>
-    </div>
-
-    <div class="muted" style="margin-top:10px">
-      تنبيه: "إضافة هذا الشهر" للادخار/الاحتياط تُحسب ضمن المصاريف لأنها تُخصم من الدخل الكلي. أما "سحب من الاحتياط" لا علاقة له بالدخل.
     </div>
   </div>
 
+  <!-- النتائج -->
   <div class="card">
     <h3>النتائج</h3>
     <div class="row"><div>الدخل الكلي</div><div class="ok" id="r_income">-</div></div>
     <div class="row"><div>إجمالي المصاريف</div><div class="ok" id="r_expenses">-</div></div>
-    <div class="row"><div>الباقي بعد كل المصاريف</div><div id="r_left">-</div></div>
-    <div class="row"><div>نسبة المصاريف من الدخل</div><div id="r_ratio">-</div></div>
+    <div class="row"><div>الباقي</div><div id="r_left">-</div></div>
+    <div class="row"><div>النسبة</div><div id="r_ratio">-</div></div>
   </div>
 
 </div>
 
 <script>
-  // ===========================
-  // رابط الكلاود (Google Apps Script WebApp)
-  // ===========================
-  const CLOUD_URL = "https://script.google.com/macros/s/AKfycbziqNmVdsQsaf5hVUy1VaarJHad9wyFsnk-k2stAlRdlm5dYdRUnqf-c95YbLmO9jvB7A/exec";
+  // رابط الكلاود
+  const CLOUD_URL = "https://script.google.com/macros/s/AKfycbyy1smyLa7GPQw6-QVmC4kKutDnj9kwHkAN9VYGXM6k0hucFhA64ysXe5vV6YNebRV2bA/exec";
 
-  // ===== أدوات عامة =====
   const el = (id) => document.getElementById(id);
   function nVal(input){ return Number(input?.value) || 0; }
   function n(id){ return Number(el(id)?.value) || 0; }
@@ -266,36 +263,27 @@
   }
 
   function setSaveState(text, ok=true){
-    const box = el("saveState");
-    if(!box) return;
+    const box = el("saveState"); if(!box) return;
     const dot = box.querySelector(".dot");
-    if(dot){
-      dot.classList.remove("ok","warn");
-      dot.classList.add(ok ? "ok" : "warn");
-    }
+    dot.classList.remove("ok","warn");
+    dot.classList.add(ok ? "ok" : "warn");
     box.childNodes[1].nodeValue = " " + text;
   }
 
   function setCloudState(text, ok=true){
-    const box = el("cloudState");
-    if(!box) return;
+    const box = el("cloudState"); if(!box) return;
     const dot = box.querySelector(".dot");
-    if(dot){
-      dot.classList.remove("ok","warn");
-      dot.classList.add(ok ? "ok" : "warn");
-    }
+    dot.classList.remove("ok","warn");
+    dot.classList.add(ok ? "ok" : "warn");
     box.childNodes[1].nodeValue = " " + text;
   }
 
-  // ===== JSONP (حل CORS) =====
+  // JSONP
   function jsonp(url, timeoutMs=12000){
     return new Promise((resolve, reject) => {
       const cbName = "cb_" + Math.random().toString(36).slice(2);
       const script = document.createElement("script");
-      const timer = setTimeout(() => {
-        cleanup();
-        reject(new Error("timeout"));
-      }, timeoutMs);
+      const timer = setTimeout(() => { cleanup(); reject(new Error("timeout")); }, timeoutMs);
 
       function cleanup(){
         clearTimeout(timer);
@@ -303,21 +291,17 @@
         if(script.parentNode) script.parentNode.removeChild(script);
       }
 
-      window[cbName] = (data) => {
-        cleanup();
-        resolve(data);
-      };
+      window[cbName] = (data) => { cleanup(); resolve(data); };
 
       const sep = url.includes("?") ? "&" : "?";
-      script.src = url + sep + "callback=" + encodeURIComponent(cbName);
+      script.src = url + sep + "callback=" + encodeURIComponent(cbName) + "&_=" + Date.now();
       script.onerror = () => { cleanup(); reject(new Error("script error")); };
       document.body.appendChild(script);
     });
   }
 
-  // ===== تخزين محلي =====
+  // Local storage
   const STORE_KEY = "budget_monthly_store_v3_manual_save";
-
   function loadStore(){
     try{
       const raw = localStorage.getItem(STORE_KEY);
@@ -331,22 +315,17 @@
       return { global: { savingsBalance: 0, reserveBalance: 0 }, months: {}, _lastMonthKey: "" };
     }
   }
-
-  function saveStore(store){
-    localStorage.setItem(STORE_KEY, JSON.stringify(store));
-  }
+  function saveStore(store){ localStorage.setItem(STORE_KEY, JSON.stringify(store)); }
 
   function getThisMonth(){
     const d = new Date();
     const mm = String(d.getMonth()+1).padStart(2,"0");
     return `${d.getFullYear()}-${mm}`;
   }
-
   function currentMonthKey(){
     const v = el("monthKey")?.value;
     return v && /^\d{4}-\d{2}$/.test(v) ? v : getThisMonth();
   }
-
   function monthPlusOne(ym){
     const [y,m] = ym.split("-").map(Number);
     const d = new Date(y, m-1, 1);
@@ -355,11 +334,13 @@
     return `${d.getFullYear()}-${mm}`;
   }
 
+  let isApplying = false;
   function markDirty(){
+    if(isApplying) return;
     setSaveState("حفظ: تغييرات غير محفوظة", false);
   }
 
-  // ===== مصاريف إضافية =====
+  // Extra expenses
   function addExpenseRow(nameVal="", amountVal=0){
     const wrap = el("extraExpenses");
 
@@ -372,7 +353,6 @@
     nameLabel.textContent = "اسم المصروف";
     const nameInput = document.createElement("input");
     nameInput.type = "text";
-    nameInput.placeholder = "مثال: صيانة / علاج / ملابس";
     nameInput.value = nameVal || "";
     nameInput.addEventListener("input", () => { calc(); markDirty(); });
     nameBox.appendChild(nameLabel);
@@ -395,11 +375,7 @@
     removeBtn.type = "button";
     removeBtn.className = "remove";
     removeBtn.textContent = "حذف";
-    removeBtn.addEventListener("click", () => {
-      row.remove();
-      calc();
-      markDirty();
-    });
+    removeBtn.addEventListener("click", () => { row.remove(); calc(); markDirty(); });
     btnBox.appendChild(removeBtn);
 
     row._nameInput = nameInput;
@@ -417,26 +393,18 @@
   function getExtraExpensesList(){
     const rows = el("extraExpenses")?.querySelectorAll(".expense-row") || [];
     const list = [];
-    rows.forEach(r => {
-      list.push({
-        name: (r._nameInput?.value || "").trim(),
-        amount: nVal(r._amountInput)
-      });
-    });
+    rows.forEach(r => list.push({ name: (r._nameInput?.value || "").trim(), amount: nVal(r._amountInput) }));
     return list;
   }
-
   function getExtraExpensesTotal(){
     return getExtraExpensesList().reduce((a,b)=>a+(Number(b.amount)||0), 0);
   }
-
   function clearExtraExpenses(){
     el("extraExpenses").innerHTML = "";
     calc();
     markDirty();
   }
 
-  // ===== الحساب =====
   function calc(){
     const income = n("salary1") + n("salary2");
     el("totalIncome").value = fmt(income);
@@ -466,14 +434,12 @@
     el("reserveDisplay").textContent = fmt(n("reserveBalance"));
   }
 
-  // ===== تراكم =====
   function applySavings(){
     const add = n("savingsAdd");
     if(add <= 0) return;
     setVal("savingsBalance", n("savingsBalance") + add);
     setVal("savingsAdd", 0);
-    calc();
-    markDirty();
+    calc(); markDirty();
   }
   function resetSavingsAdd(){ setVal("savingsAdd", 0); calc(); markDirty(); }
 
@@ -482,8 +448,7 @@
     if(add <= 0) return;
     setVal("reserveBalance", n("reserveBalance") + add);
     setVal("reserveAdd", 0);
-    calc();
-    markDirty();
+    calc(); markDirty();
   }
   function resetReserveAdd(){ setVal("reserveAdd", 0); calc(); markDirty(); }
 
@@ -495,12 +460,10 @@
     if(newBal < 0){ alert("المبلغ أكبر من رصيد الاحتياط الحالي."); return; }
     setVal("reserveBalance", newBal);
     setVal("reserveWithdraw", 0);
-    calc();
-    markDirty();
+    calc(); markDirty();
   }
   function resetReserveWithdraw(){ setVal("reserveWithdraw", 0); calc(); markDirty(); }
 
-  // ===== الشهرية =====
   const MONTH_FIELDS = [
     "salary1","salary2",
     "nursery","school",
@@ -517,18 +480,28 @@
   }
 
   function applyMonthData(data){
-    MONTH_FIELDS.forEach(id => setVal(id, (data?.[id] ?? 0)));
-    el("extraExpenses").innerHTML = "";
-    (data?.extraExpenses || []).forEach(x => addExpenseRow(x.name || "", Number(x.amount)||0));
-    setVal("reserveWithdraw", 0);
-    calc();
+    isApplying = true;
+    try{
+      MONTH_FIELDS.forEach(id => setVal(id, (data?.[id] ?? 0)));
+      el("extraExpenses").innerHTML = "";
+      (data?.extraExpenses || []).forEach(x => addExpenseRow(x.name || "", Number(x.amount)||0));
+      setVal("reserveWithdraw", 0);
+      calc();
+    } finally {
+      isApplying = false;
+    }
   }
 
   function clearMonthForm(){
-    MONTH_FIELDS.forEach(id => setVal(id, 0));
-    el("extraExpenses").innerHTML = "";
-    setVal("reserveWithdraw", 0);
-    calc();
+    isApplying = true;
+    try{
+      MONTH_FIELDS.forEach(id => setVal(id, 0));
+      el("extraExpenses").innerHTML = "";
+      setVal("reserveWithdraw", 0);
+      calc();
+    } finally {
+      isApplying = false;
+    }
   }
 
   function saveMonthInternal(monthKey){
@@ -549,14 +522,13 @@
     calc();
   }
 
-  // ===== Cloud عبر JSONP =====
+  // Cloud
   let cloudSaving = false;
 
   async function cloudPing(){
     try{
       const out = await jsonp(CLOUD_URL + "?action=ping");
-      if(out && out.ok) setCloudState("Cloud: متصل ✅", true);
-      else setCloudState("Cloud: غير متصل ❌", false);
+      setCloudState(out && out.ok ? "Cloud: متصل ✅" : "Cloud: غير متصل ❌", !!(out && out.ok));
     }catch(e){
       setCloudState("Cloud: غير متصل ❌", false);
     }
@@ -564,19 +536,15 @@
 
   async function cloudSaveNow(){
     const mk = currentMonthKey();
-    if(cloudSaving) return; // منع تكرار سريع
-
+    if(cloudSaving) return false;
     cloudSaving = true;
+
     setCloudState("Cloud: جاري الحفظ...", true);
 
-    const monthData = captureMonth();
     const payload = {
       month: mk,
-      global: {
-        savingsBalance: n("savingsBalance"),
-        reserveBalance: n("reserveBalance")
-      },
-      monthData: monthData,
+      global: { savingsBalance: n("savingsBalance"), reserveBalance: n("reserveBalance") },
+      monthData: captureMonth(),
       extraAmount: getExtraExpensesTotal()
     };
 
@@ -587,10 +555,9 @@
       if(out && out.ok){
         setCloudState("Cloud: تم الحفظ ✅", true);
         return true;
-      }else{
-        setCloudState("Cloud: فشل ❌", false);
-        return false;
       }
+      setCloudState("Cloud: فشل ❌", false);
+      return false;
     }catch(e){
       setCloudState("Cloud: فشل ❌", false);
       return false;
@@ -616,9 +583,7 @@
         clearMonthForm();
       }
 
-      // حدّث المحلي بعد التحميل
       saveMonthInternal(monthKey);
-
       setCloudState("Cloud: متصل ✅", true);
       setSaveState("حفظ: تم التحميل ✅", true);
     }catch(e){
@@ -626,15 +591,12 @@
     }
   }
 
-  // ===== أزرار =====
+  // Buttons
   async function saveMonth(){
     const mk = currentMonthKey();
-
-    // محلي
     saveMonthInternal(mk);
     setSaveState("حفظ: تم محليًا ✅", true);
 
-    // كلاود
     const ok = await cloudSaveNow();
     if(ok){
       setSaveState("حفظ: تم ✅", true);
@@ -652,27 +614,19 @@
 
   function startNewMonth(){
     const mk = currentMonthKey();
-    // لا نحفظ كلاود تلقائي هنا — المستخدم هو يضغط حفظ إذا يريد
     saveMonthInternal(mk);
 
     const next = monthPlusOne(mk);
     el("monthKey").value = next;
 
     clearMonthForm();
-    setVal("savingsAdd", 0);
-    setVal("reserveAdd", 0);
-
-    saveMonthInternal(next);
     setSaveState("حفظ: تغييرات غير محفوظة", false);
-
     alert("تم بدء شهر جديد: " + next);
   }
 
   function onMonthChange(){
     const store = loadStore();
     const prev = store._lastMonthKey || getThisMonth();
-
-    // حفظ محلي للشهر السابق فقط (بدون كلاود)
     saveMonthInternal(prev);
 
     const mk = currentMonthKey();
@@ -680,11 +634,9 @@
     s2._lastMonthKey = mk;
     saveStore(s2);
 
-    // تحميل من الكلاود للشهر الجديد
     cloudLoadMonth(mk);
   }
 
-  // ===== نسخ احتياطي =====
   function exportBackup(){
     const mk = currentMonthKey();
     saveMonthInternal(mk);
@@ -719,7 +671,6 @@
 
         loadMonthInternal(mk);
         setSaveState("حفظ: تم استيراد نسخة ✅", true);
-
         alert("تم استيراد النسخة بنجاح.");
       }catch(e){
         alert("فشل الاستيراد: الملف غير صحيح.");
@@ -734,7 +685,6 @@
     init();
   }
 
-  // ===== تهيئة =====
   function init(){
     el("monthKey").value = getThisMonth();
 
@@ -742,13 +692,10 @@
     if(!store._lastMonthKey) store._lastMonthKey = el("monthKey").value;
     saveStore(store);
 
-    // محلي
     loadMonthInternal(currentMonthKey());
 
-    // كلاود
     cloudPing().then(() => cloudLoadMonth(currentMonthKey()));
 
-    // أي تغيير بالحقل => calc فقط + علامة غير محفوظ
     const ids = [...MONTH_FIELDS,"savingsBalance","reserveBalance","reserveWithdraw"];
     ids.forEach(id => el(id)?.addEventListener("input", () => { calc(); markDirty(); }));
 
@@ -766,23 +713,17 @@
 
   init();
 
-  // expose
   window.addExpenseRow = addExpenseRow;
   window.clearExtraExpenses = clearExtraExpenses;
-
   window.applySavings = applySavings;
   window.resetSavingsAdd = resetSavingsAdd;
-
   window.applyReserve = applyReserve;
   window.resetReserveAdd = resetReserveAdd;
-
   window.withdrawReserve = withdrawReserve;
   window.resetReserveWithdraw = resetReserveWithdraw;
-
   window.saveMonth = saveMonth;
   window.loadMonth = loadMonth;
   window.startNewMonth = startNewMonth;
-
   window.exportBackup = exportBackup;
   window.triggerImport = triggerImport;
   window.clearAllData = clearAllData;
@@ -790,9 +731,3 @@
 
 </body>
 </html>
-
-
-
-
-
-
