@@ -1,47 +1,39 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>برنامج تقسيم الراتب وإدارة المصاريف</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>برنامج تقسيم الراتب</title>
 
-  <style>
-    body { font-family: system-ui, Arial; margin: 18px; line-height: 1.6; background:#fafafa; }
-    .wrap { max-width: 980px; margin: auto; }
-    .card { border: 1px solid #ddd; border-radius: 12px; padding: 14px; margin-bottom: 12px; background:#fff; }
-    h2,h3 { margin: 0 0 10px; }
-    .muted { color: #666; font-size: 13px; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-    label { display:block; font-size: 14px; margin-bottom: 6px; }
-    input { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #ccc; }
-    input[readonly] { background:#f7f7f7; }
-    button { padding: 10px 14px; border-radius: 10px; border: 1px solid #999; background: #f6f6f6; cursor: pointer; }
-    button:active { transform: scale(0.99); }
-    .row { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px dashed #eee; }
-    .row:last-child { border-bottom: 0; }
-    .ok { font-weight: 700; }
-    .warn { font-weight: 700; color: #b00020; }
-    .line { border: none; border-top: 1px solid #eee; margin: 14px 0; }
-
-    .btns { display:flex; gap:8px; flex-wrap: wrap; margin-top: 10px; }
-    .btns button { flex: 1 1 150px; }
-
-    .status { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px; }
-    .pill { display:inline-flex; gap:6px; align-items:center; padding:6px 10px; border:1px solid #ddd; border-radius:999px; font-size:12px; background:#fafafa; }
-    .dot { width:10px; height:10px; border-radius:50%; display:inline-block; background:#999; }
-    .dot.ok { background:#1b8f3a; }
-    .dot.warn { background:#b00020; }
-
-    .expense-row { display:grid; grid-template-columns: 1.2fr 1fr auto; gap:10px; align-items:end; }
-    .expense-row .remove { padding: 10px 12px; }
-
-    @media (max-width: 760px) {
-      .grid, .grid3 { grid-template-columns: 1fr; }
-      .expense-row { grid-template-columns: 1fr; }
-      .btns button { flex: 1 1 48%; }
-    }
-  </style>
+<style>
+  body{font-family:system-ui,Arial;margin:18px;background:#fafafa;line-height:1.6}
+  .wrap{max-width:980px;margin:auto}
+  .card{background:#fff;border:1px solid #ddd;border-radius:12px;padding:14px;margin-bottom:12px}
+  h2,h3{margin:0 0 10px}
+  .muted{color:#666;font-size:13px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  label{display:block;margin-bottom:6px;font-size:14px}
+  input{width:100%;padding:10px;border-radius:10px;border:1px solid #ccc}
+  input[readonly]{background:#f7f7f7}
+  button{padding:10px 14px;border-radius:10px;border:1px solid #999;background:#f6f6f6;cursor:pointer}
+  button:active{transform:scale(.99)}
+  .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .btns button{flex:1 1 160px}
+  .row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px dashed #eee}
+  .row:last-child{border-bottom:0}
+  .ok{font-weight:700}
+  .warn{font-weight:700;color:#b00020}
+  .status{margin-top:10px;font-size:13px}
+  .pill{display:inline-flex;gap:6px;align-items:center;padding:6px 10px;border:1px solid #ddd;border-radius:999px;background:#fafafa}
+  .dot{width:10px;height:10px;border-radius:50%;background:#999;display:inline-block}
+  .dot.ok{background:#1b8f3a}
+  .dot.warn{background:#b00020}
+  @media (max-width:760px){
+    .grid,.grid3{grid-template-columns:1fr}
+    .btns button{flex:1 1 48%}
+  }
+</style>
 </head>
 
 <body>
@@ -49,686 +41,107 @@
 
   <div class="card">
     <h2>إدارة الدخل والمصاريف</h2>
-    <div class="muted">الدخل الكلي يُحسب تلقائيًا، وكل المصاريف تُخصم منه. (سحب الاحتياط لا يؤثر على الدخل)</div>
+    <div class="muted">الحفظ والتحميل يصير من Google Sheet (كلاود). التعديل بالحقل فقط يحسب النتائج — وما ينحفظ إلا إذا تضغط "حفظ".</div>
   </div>
 
   <div class="card" id="monthCard">
-    <h3>إدارة الشهور والنسخ الاحتياطي</h3>
+    <h3>الشهر + الحفظ</h3>
 
     <div>
       <label>الشهر</label>
       <input id="monthKey" type="month">
-      <div class="muted">كل شهر ينحفظ وحده. التبديل بين الشهور يحمل من الكلاود. الحفظ للكلاود يتم فقط عند الضغط على زر الحفظ.</div>
+      <div class="muted">اختر الشهر وبعدين اضغط تحميل. بعد ما تعدّل اضغط حفظ.</div>
     </div>
 
-    <div style="margin-top:12px">
-      <label>إجراءات</label>
-      <div class="btns" style="margin-top:6px">
-        <button type="button" onclick="saveMonth()">✅ حفظ هذا الشهر (كلاود + محلي)</button>
-        <button type="button" onclick="loadMonth()">⬇️ تحميل هذا الشهر من الكلاود</button>
-        <button type="button" onclick="startNewMonth()">بدء شهر جديد</button>
-        <button type="button" onclick="exportBackup()">تصدير نسخة</button>
-        <button type="button" onclick="triggerImport()">استيراد نسخة</button>
-        <button type="button" onclick="clearAllData()">مسح كل البيانات</button>
-      </div>
+    <div class="btns" style="margin-top:12px">
+      <button type="button" onclick="loadData()">📥 تحميل من الكلاود</button>
+      <button type="button" onclick="saveData()">💾 حفظ إلى الكلاود</button>
+    </div>
 
-      <input id="importFile" type="file" accept="application/json" style="display:none" />
-
-      <div class="muted" style="margin-top:8px">
-        ملاحظة: الادخار/الاحتياط (الرصيد الحالي) يبقى متراكم لكل الشهور، أما "إضافة هذا الشهر" تنحفظ ضمن الشهر.
-      </div>
-
-      <div class="status">
-        <span class="pill" id="cloudState"><span class="dot"></span> Cloud: جاري التحقق...</span>
-        <span class="pill" id="saveState"><span class="dot"></span> حفظ: جاهز</span>
-      </div>
+    <div class="status">
+      <span class="pill" id="cloudState"><span class="dot"></span> Cloud: جاهز</span>
+      <span class="pill" id="saveState"><span class="dot"></span> حالة: بانتظار</span>
     </div>
   </div>
 
-  <!-- الدخل -->
   <div class="card">
     <h3>الدخل</h3>
     <div class="grid">
-      <div>
-        <label>الراتب الأول</label>
-        <input id="salary1" type="number" value="0" min="0" step="1000">
-      </div>
-      <div>
-        <label>الراتب الثاني</label>
-        <input id="salary2" type="number" value="0" min="0" step="1000">
-      </div>
+      <div><label>الراتب الأول</label><input id="salary1" type="number" value="0" min="0" step="1000"></div>
+      <div><label>الراتب الثاني</label><input id="salary2" type="number" value="0" min="0" step="1000"></div>
     </div>
-
-    <div style="margin-top:10px" class="grid">
-      <div>
-        <label>الدخل الكلي</label>
-        <input id="totalIncome" type="text" readonly>
-      </div>
-      <div class="muted">هذا الرقم هو الأساس الذي تُخصم منه المصاريف.</div>
-    </div>
-  </div>
-
-  <!-- تعليم -->
-  <div class="card">
-    <h3>مصاريف تعليم</h3>
-    <div class="grid">
-      <div>
-        <label>مصاريف روضة</label>
-        <input id="nursery" type="number" value="0" min="0" step="1000">
-      </div>
-      <div>
-        <label>مصاريف مدرسة</label>
-        <input id="school" type="number" value="0" min="0" step="1000">
-      </div>
-    </div>
-  </div>
-
-  <!-- طفل جديد -->
-  <div class="card">
-    <h3>مصاريف طفل جديد</h3>
-    <div class="grid3">
-      <div>
-        <label>ملابس</label>
-        <input id="babyClothes" type="number" value="0" min="0" step="1000">
-      </div>
-      <div>
-        <label>حليب</label>
-        <input id="babyMilk" type="number" value="0" min="0" step="1000">
-      </div>
-      <div>
-        <label>حفاظات</label>
-        <input id="babyDiapers" type="number" value="0" min="0" step="1000">
-      </div>
-    </div>
-  </div>
-
-  <!-- عامة -->
-  <div class="card">
-    <h3>مصاريف عامة</h3>
-    <div class="grid">
-      <div>
-        <label>مصاريف رصيد</label>
-        <input id="phone" type="number" value="0" min="0" step="1000">
-      </div>
-      <div>
-        <label>مصاريف بيت</label>
-        <input id="home" type="number" value="0" min="0" step="1000">
-      </div>
-      <div>
-        <label>مصاريف ثانوية</label>
-        <input id="secondary" type="number" value="0" min="0" step="1000">
-      </div>
-      <div>
-        <label>حقل إضافي</label>
-        <input id="other" type="number" value="0" min="0" step="1000">
-      </div>
-    </div>
-
-    <hr class="line">
-
-    <h3 style="margin-top:0">مصاريف إضافية</h3>
-    <div class="muted">تضيف سطر باسم ومبلغ.</div>
-
-    <div id="extraExpenses"></div>
-
-    <div class="btns">
-      <button type="button" onclick="addExpenseRow()">إضافة مصروف</button>
-      <button type="button" onclick="clearExtraExpenses()">مسح المصاريف الإضافية</button>
-    </div>
-
-    <div class="row" style="margin-top:10px">
-      <div>مجموع المصاريف الإضافية</div>
-      <div class="ok" id="extraTotal">-</div>
-    </div>
-  </div>
-
-  <!-- ادخار واحتياط -->
-  <div class="card">
-    <h3>الادخار والاحتياط (تراكم)</h3>
-
-    <div class="grid">
-      <div>
-        <label>ادخار: الرصيد الحالي</label>
-        <input id="savingsBalance" type="number" value="0" min="0" step="1000">
-      </div>
-      <div>
-        <label>ادخار: إضافة هذا الشهر</label>
-        <input id="savingsAdd" type="number" value="0" min="0" step="1000">
-        <div class="btns">
-          <button type="button" onclick="applySavings()">أضف إلى الادخار</button>
-          <button type="button" onclick="resetSavingsAdd()">تصفير إضافة الادخار</button>
-        </div>
-      </div>
-    </div>
-
-    <hr class="line">
-
-    <div class="grid">
-      <div>
-        <label>احتياط: الرصيد الحالي</label>
-        <input id="reserveBalance" type="number" value="0" min="0" step="1000">
-      </div>
-      <div>
-        <label>احتياط: إضافة هذا الشهر</label>
-        <input id="reserveAdd" type="number" value="0" min="0" step="1000">
-        <div class="btns">
-          <button type="button" onclick="applyReserve()">أضف إلى الاحتياط</button>
-          <button type="button" onclick="resetReserveAdd()">تصفير إضافة الاحتياط</button>
-        </div>
-      </div>
-    </div>
-
-    <hr class="line">
-
-    <div class="grid">
-      <div>
-        <label>سحب من الاحتياط</label>
-        <input id="reserveWithdraw" type="number" value="0" min="0" step="1000">
-        <div class="btns">
-          <button type="button" onclick="withdrawReserve()">سحب</button>
-          <button type="button" onclick="resetReserveWithdraw()">تصفير السحب</button>
-        </div>
-      </div>
-      <div class="muted">لا يدخل ضمن المصاريف الشهرية.</div>
-    </div>
-
-    <div class="row" style="margin-top:10px">
-      <div>رصيد الاحتياط الحالي</div>
-      <div class="ok" id="reserveDisplay">-</div>
-    </div>
-  </div>
-
-  <!-- النتائج -->
-  <div class="card">
-    <h3>النتائج</h3>
     <div class="row"><div>الدخل الكلي</div><div class="ok" id="r_income">-</div></div>
+  </div>
+
+  <div class="card">
+    <h3>مصاريف</h3>
+    <div class="grid">
+      <div><label>مدرسة</label><input id="school" type="number" value="0" min="0" step="1000"></div>
+      <div><label>بيت</label><input id="home" type="number" value="0" min="0" step="1000"></div>
+      <div><label>رصيد/هاتف</label><input id="phone" type="number" value="0" min="0" step="1000"></div>
+      <div><label>أخرى</label><input id="other" type="number" value="0" min="0" step="1000"></div>
+    </div>
+
     <div class="row"><div>إجمالي المصاريف</div><div class="ok" id="r_expenses">-</div></div>
     <div class="row"><div>الباقي</div><div id="r_left">-</div></div>
-    <div class="row"><div>النسبة</div><div id="r_ratio">-</div></div>
   </div>
 
 </div>
 
 <script>
-  // رابط الكلاود
-  const CLOUD_URL = "https://script.google.com/macros/s/AKfycbyh-q4MxBXkXV-ZybJFoLtz5JHmq7EeCdhKVvRSR5WjFt8SBqXFJst2mRs0JVHwrquuRA/exec";
+  // ✅ رابطك انت
+  const CLOUD_URL = "https://script.google.com/macros/s/AKfycbx9bEuSGz8kwzrTxc0qZDhZdY5ONuQ4JyX5Dd67erKoUkULC9MyUPg_HY7UvKVBhft0SQ/exec";
 
   const el = (id) => document.getElementById(id);
-  function nVal(input){ return Number(input?.value) || 0; }
-  function n(id){ return Number(el(id)?.value) || 0; }
-  function setVal(id, v){ if(el(id)) el(id).value = (v ?? ""); }
+  const n = (id) => Number(el(id).value) || 0;
+
   function fmt(v){
-    const x = Math.round(Number(v) || 0);
+    const x = Math.round(Number(v)||0);
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + " د.ع";
   }
 
-  function setSaveState(text, ok=true){
-    const box = el("saveState"); if(!box) return;
+  function setPill(id, text, ok=true){
+    const box = el(id);
+    if(!box) return;
     const dot = box.querySelector(".dot");
-    dot.classList.remove("ok","warn");
-    dot.classList.add(ok ? "ok" : "warn");
-    box.childNodes[1].nodeValue = " " + text;
-  }
-
-  function setCloudState(text, ok=true){
-    const box = el("cloudState"); if(!box) return;
-    const dot = box.querySelector(".dot");
-    dot.classList.remove("ok","warn");
-    dot.classList.add(ok ? "ok" : "warn");
-    box.childNodes[1].nodeValue = " " + text;
-  }
-
-  // JSONP
-  function jsonp(url, timeoutMs=12000){
-    return new Promise((resolve, reject) => {
-      const cbName = "cb_" + Math.random().toString(36).slice(2);
-      const script = document.createElement("script");
-      const timer = setTimeout(() => { cleanup(); reject(new Error("timeout")); }, timeoutMs);
-
-      function cleanup(){
-        clearTimeout(timer);
-        try{ delete window[cbName]; }catch(e){ window[cbName]=undefined; }
-        if(script.parentNode) script.parentNode.removeChild(script);
-      }
-
-      window[cbName] = (data) => { cleanup(); resolve(data); };
-
-      const sep = url.includes("?") ? "&" : "?";
-      script.src = url + sep + "callback=" + encodeURIComponent(cbName) + "&_=" + Date.now();
-      script.onerror = () => { cleanup(); reject(new Error("script error")); };
-      document.body.appendChild(script);
-    });
-  }
-
-  // Local storage
-  const STORE_KEY = "budget_monthly_store_v3_manual_save";
-  function loadStore(){
-    try{
-      const raw = localStorage.getItem(STORE_KEY);
-      if(!raw) return { global: { savingsBalance: 0, reserveBalance: 0 }, months: {}, _lastMonthKey: "" };
-      const s = JSON.parse(raw);
-      s.global = s.global || { savingsBalance: 0, reserveBalance: 0 };
-      s.months = s.months || {};
-      s._lastMonthKey = s._lastMonthKey || "";
-      return s;
-    }catch(e){
-      return { global: { savingsBalance: 0, reserveBalance: 0 }, months: {}, _lastMonthKey: "" };
+    if(dot){
+      dot.classList.remove("ok","warn");
+      dot.classList.add(ok ? "ok" : "warn");
     }
+    box.childNodes[1].nodeValue = " " + text;
   }
-  function saveStore(store){ localStorage.setItem(STORE_KEY, JSON.stringify(store)); }
 
   function getThisMonth(){
     const d = new Date();
     const mm = String(d.getMonth()+1).padStart(2,"0");
     return `${d.getFullYear()}-${mm}`;
   }
-  function currentMonthKey(){
-    const v = el("monthKey")?.value;
-    return v && /^\d{4}-\d{2}$/.test(v) ? v : getThisMonth();
-  }
-  function monthPlusOne(ym){
-    const [y,m] = ym.split("-").map(Number);
-    const d = new Date(y, m-1, 1);
-    d.setMonth(d.getMonth()+1);
-    const mm = String(d.getMonth()+1).padStart(2,"0");
-    return `${d.getFullYear()}-${mm}`;
-  }
-
-  let isApplying = false;
-  function markDirty(){
-    if(isApplying) return;
-    setSaveState("حفظ: تغييرات غير محفوظة", false);
-  }
-
-  // Extra expenses
-  function addExpenseRow(nameVal="", amountVal=0){
-    const wrap = el("extraExpenses");
-
-    const row = document.createElement("div");
-    row.className = "expense-row";
-    row.style.marginTop = "10px";
-
-    const nameBox = document.createElement("div");
-    const nameLabel = document.createElement("label");
-    nameLabel.textContent = "اسم المصروف";
-    const nameInput = document.createElement("input");
-    nameInput.type = "text";
-    nameInput.value = nameVal || "";
-    nameInput.addEventListener("input", () => { calc(); markDirty(); });
-    nameBox.appendChild(nameLabel);
-    nameBox.appendChild(nameInput);
-
-    const amountBox = document.createElement("div");
-    const amountLabel = document.createElement("label");
-    amountLabel.textContent = "المبلغ";
-    const amountInput = document.createElement("input");
-    amountInput.type = "number";
-    amountInput.min = "0";
-    amountInput.step = "1000";
-    amountInput.value = String(amountVal || 0);
-    amountInput.addEventListener("input", () => { calc(); markDirty(); });
-    amountBox.appendChild(amountLabel);
-    amountBox.appendChild(amountInput);
-
-    const btnBox = document.createElement("div");
-    const removeBtn = document.createElement("button");
-    removeBtn.type = "button";
-    removeBtn.className = "remove";
-    removeBtn.textContent = "حذف";
-    removeBtn.addEventListener("click", () => { row.remove(); calc(); markDirty(); });
-    btnBox.appendChild(removeBtn);
-
-    row._nameInput = nameInput;
-    row._amountInput = amountInput;
-
-    row.appendChild(nameBox);
-    row.appendChild(amountBox);
-    row.appendChild(btnBox);
-    wrap.appendChild(row);
-
-    calc();
-    markDirty();
-  }
-
-  function getExtraExpensesList(){
-    const rows = el("extraExpenses")?.querySelectorAll(".expense-row") || [];
-    const list = [];
-    rows.forEach(r => list.push({ name: (r._nameInput?.value || "").trim(), amount: nVal(r._amountInput) }));
-    return list;
-  }
-  function getExtraExpensesTotal(){
-    return getExtraExpensesList().reduce((a,b)=>a+(Number(b.amount)||0), 0);
-  }
-  function clearExtraExpenses(){
-    el("extraExpenses").innerHTML = "";
-    calc();
-    markDirty();
-  }
 
   function calc(){
     const income = n("salary1") + n("salary2");
-    el("totalIncome").value = fmt(income);
-
-    const edu = n("nursery") + n("school");
-    const baby = n("babyClothes") + n("babyMilk") + n("babyDiapers");
-    const general = n("phone") + n("home") + n("secondary") + n("other");
-    const monthlySavings = n("savingsAdd");
-    const monthlyReserve = n("reserveAdd");
-
-    const extra = getExtraExpensesTotal();
-    el("extraTotal").textContent = fmt(extra);
-
-    const expenses = edu + baby + general + monthlySavings + monthlyReserve + extra;
-    const left = income - expenses;
+    const exp = n("school") + n("home") + n("phone") + n("other");
+    const left = income - exp;
 
     el("r_income").textContent = fmt(income);
-    el("r_expenses").textContent = fmt(expenses);
+    el("r_expenses").textContent = fmt(exp);
 
     const leftEl = el("r_left");
     leftEl.textContent = fmt(left);
     leftEl.className = (left >= 0) ? "ok" : "warn";
 
-    const ratio = income > 0 ? (expenses / income) * 100 : 0;
-    el("r_ratio").textContent = ratio.toFixed(1) + "%";
-
-    el("reserveDisplay").textContent = fmt(n("reserveBalance"));
+    setPill("saveState", "حالة: تغييرات غير محفوظة", false);
   }
 
-  function applySavings(){
-    const add = n("savingsAdd");
-    if(add <= 0) return;
-    setVal("savingsBalance", n("savingsBalance") + add);
-    setVal("savingsAdd", 0);
-    calc(); markDirty();
-  }
-  function resetSavingsAdd(){ setVal("savingsAdd", 0); calc(); markDirty(); }
+  // JSONP لتجاوز CORS
+  function jsonp(url, timeoutMs=15000){
+    return new Promise((resolve, reject) => {
+      const cbName = "cb_" + Math.random().toString(36).slice(2);
+      const script = document.createElement("script");
+      let done = false;
 
-  function applyReserve(){
-    const add = n("reserveAdd");
-    if(add <= 0) return;
-    setVal("reserveBalance", n("reserveBalance") + add);
-    setVal("reserveAdd", 0);
-    calc(); markDirty();
-  }
-  function resetReserveAdd(){ setVal("reserveAdd", 0); calc(); markDirty(); }
-
-  function withdrawReserve(){
-    const w = n("reserveWithdraw");
-    if(w <= 0) return;
-    const current = n("reserveBalance");
-    const newBal = current - w;
-    if(newBal < 0){ alert("المبلغ أكبر من رصيد الاحتياط الحالي."); return; }
-    setVal("reserveBalance", newBal);
-    setVal("reserveWithdraw", 0);
-    calc(); markDirty();
-  }
-  function resetReserveWithdraw(){ setVal("reserveWithdraw", 0); calc(); markDirty(); }
-
-  const MONTH_FIELDS = [
-    "salary1","salary2",
-    "nursery","school",
-    "babyClothes","babyMilk","babyDiapers",
-    "phone","home","secondary","other",
-    "savingsAdd","reserveAdd"
-  ];
-
-  function captureMonth(){
-    const data = {};
-    MONTH_FIELDS.forEach(id => data[id] = n(id));
-    data.extraExpenses = getExtraExpensesList();
-    return data;
-  }
-
-  function applyMonthData(data){
-    isApplying = true;
-    try{
-      MONTH_FIELDS.forEach(id => setVal(id, (data?.[id] ?? 0)));
-      el("extraExpenses").innerHTML = "";
-      (data?.extraExpenses || []).forEach(x => addExpenseRow(x.name || "", Number(x.amount)||0));
-      setVal("reserveWithdraw", 0);
-      calc();
-    } finally {
-      isApplying = false;
-    }
-  }
-
-  function clearMonthForm(){
-    isApplying = true;
-    try{
-      MONTH_FIELDS.forEach(id => setVal(id, 0));
-      el("extraExpenses").innerHTML = "";
-      setVal("reserveWithdraw", 0);
-      calc();
-    } finally {
-      isApplying = false;
-    }
-  }
-
-  function saveMonthInternal(monthKey){
-    const store = loadStore();
-    store.global.savingsBalance = n("savingsBalance");
-    store.global.reserveBalance = n("reserveBalance");
-    store.months[monthKey] = captureMonth();
-    store._lastMonthKey = monthKey;
-    saveStore(store);
-  }
-
-  function loadMonthInternal(monthKey){
-    const store = loadStore();
-    setVal("savingsBalance", store.global?.savingsBalance ?? 0);
-    setVal("reserveBalance", store.global?.reserveBalance ?? 0);
-    if(store.months && store.months[monthKey]) applyMonthData(store.months[monthKey]);
-    else clearMonthForm();
-    calc();
-  }
-
-  // Cloud
-  let cloudSaving = false;
-
-  async function cloudPing(){
-    try{
-      const out = await jsonp(CLOUD_URL + "?action=ping");
-      setCloudState(out && out.ok ? "Cloud: متصل ✅" : "Cloud: غير متصل ❌", !!(out && out.ok));
-    }catch(e){
-      setCloudState("Cloud: غير متصل ❌", false);
-    }
-  }
-
-  async function cloudSaveNow(){
-    const mk = currentMonthKey();
-    if(cloudSaving) return false;
-    cloudSaving = true;
-
-    setCloudState("Cloud: جاري الحفظ...", true);
-
-    const payload = {
-      month: mk,
-      global: { savingsBalance: n("savingsBalance"), reserveBalance: n("reserveBalance") },
-      monthData: captureMonth(),
-      extraAmount: getExtraExpensesTotal()
-    };
-
-    const url = CLOUD_URL + "?action=save&payload=" + encodeURIComponent(JSON.stringify(payload));
-
-    try{
-      const out = await jsonp(url);
-      if(out && out.ok){
-        setCloudState("Cloud: تم الحفظ ✅", true);
-        return true;
-      }
-      setCloudState("Cloud: فشل ❌", false);
-      return false;
-    }catch(e){
-      setCloudState("Cloud: فشل ❌", false);
-      return false;
-    }finally{
-      cloudSaving = false;
-    }
-  }
-
-  async function cloudLoadMonth(monthKey){
-    try{
-      setCloudState("Cloud: جاري التحميل...", true);
-      const out = await jsonp(CLOUD_URL + "?action=load&month=" + encodeURIComponent(monthKey));
-      if(!out || out.ok !== true) throw new Error("bad");
-
-      if(out?.data?.global){
-        setVal("savingsBalance", Number(out.data.global.savingsBalance)||0);
-        setVal("reserveBalance", Number(out.data.global.reserveBalance)||0);
-      }
-
-      if(out?.data?.monthData){
-        applyMonthData(out.data.monthData);
-      }else{
-        clearMonthForm();
-      }
-
-      saveMonthInternal(monthKey);
-      setCloudState("Cloud: متصل ✅", true);
-      setSaveState("حفظ: تم التحميل ✅", true);
-    }catch(e){
-      setCloudState("Cloud: فشل التحميل ❌", false);
-    }
-  }
-
-  // Buttons
-  async function saveMonth(){
-    const mk = currentMonthKey();
-    saveMonthInternal(mk);
-    setSaveState("حفظ: تم محليًا ✅", true);
-
-    const ok = await cloudSaveNow();
-    if(ok){
-      setSaveState("حفظ: تم ✅", true);
-      alert("تم حفظ الشهر: " + mk);
-    }else{
-      setSaveState("حفظ: فشل بالحفظ ❌", false);
-      alert("صار فشل بالحفظ بالكلاود. جرّب مرة ثانية.");
-    }
-  }
-
-  function loadMonth(){
-    const mk = currentMonthKey();
-    cloudLoadMonth(mk);
-  }
-
-  function startNewMonth(){
-    const mk = currentMonthKey();
-    saveMonthInternal(mk);
-
-    const next = monthPlusOne(mk);
-    el("monthKey").value = next;
-
-    clearMonthForm();
-    setSaveState("حفظ: تغييرات غير محفوظة", false);
-    alert("تم بدء شهر جديد: " + next);
-  }
-
-  function onMonthChange(){
-    const store = loadStore();
-    const prev = store._lastMonthKey || getThisMonth();
-    saveMonthInternal(prev);
-
-    const mk = currentMonthKey();
-    const s2 = loadStore();
-    s2._lastMonthKey = mk;
-    saveStore(s2);
-
-    cloudLoadMonth(mk);
-  }
-
-  function exportBackup(){
-    const mk = currentMonthKey();
-    saveMonthInternal(mk);
-    const store = loadStore();
-
-    const blob = new Blob([JSON.stringify(store, null, 2)], {type:"application/json"});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "budget-backup.json";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
-
-  function triggerImport(){ el("importFile").click(); }
-
-  function handleImportFile(file){
-    const reader = new FileReader();
-    reader.onload = () => {
-      try{
-        const parsed = JSON.parse(String(reader.result || ""));
-        if(!parsed || typeof parsed !== "object") throw new Error("invalid json");
-        if(!parsed.months || !parsed.global) throw new Error("missing keys");
-
-        localStorage.setItem(STORE_KEY, JSON.stringify(parsed));
-        const mk = currentMonthKey();
-        const s = loadStore();
-        s._lastMonthKey = mk;
-        saveStore(s);
-
-        loadMonthInternal(mk);
-        setSaveState("حفظ: تم استيراد نسخة ✅", true);
-        alert("تم استيراد النسخة بنجاح.");
-      }catch(e){
-        alert("فشل الاستيراد: الملف غير صحيح.");
-      }
-    };
-    reader.readAsText(file);
-  }
-
-  function clearAllData(){
-    if(!confirm("تأكيد: مسح كل البيانات؟")) return;
-    localStorage.removeItem(STORE_KEY);
-    init();
-  }
-
-  function init(){
-    el("monthKey").value = getThisMonth();
-
-    const store = loadStore();
-    if(!store._lastMonthKey) store._lastMonthKey = el("monthKey").value;
-    saveStore(store);
-
-    loadMonthInternal(currentMonthKey());
-
-    cloudPing().then(() => cloudLoadMonth(currentMonthKey()));
-
-    const ids = [...MONTH_FIELDS,"savingsBalance","reserveBalance","reserveWithdraw"];
-    ids.forEach(id => el(id)?.addEventListener("input", () => { calc(); markDirty(); }));
-
-    el("monthKey").addEventListener("change", onMonthChange);
-
-    el("importFile").addEventListener("change", (e) => {
-      const f = e.target.files && e.target.files[0];
-      if(f) handleImportFile(f);
-      e.target.value = "";
-    });
-
-    calc();
-    setSaveState("حفظ: جاهز", true);
-  }
-
-  init();
-
-  window.addExpenseRow = addExpenseRow;
-  window.clearExtraExpenses = clearExtraExpenses;
-  window.applySavings = applySavings;
-  window.resetSavingsAdd = resetSavingsAdd;
-  window.applyReserve = applyReserve;
-  window.resetReserveAdd = resetReserveAdd;
-  window.withdrawReserve = withdrawReserve;
-  window.resetReserveWithdraw = resetReserveWithdraw;
-  window.saveMonth = saveMonth;
-  window.loadMonth = loadMonth;
-  window.startNewMonth = startNewMonth;
-  window.exportBackup = exportBackup;
-  window.triggerImport = triggerImport;
-  window.clearAllData = clearAllData;
-</script>
-
-</body>
-</html>
-
+      const timer = setTimeout(() => {
+        if(done) return;
+        done = true;
+        cleanup();
+        reject(new Error("timeout"));
+      }, timeoutMs
