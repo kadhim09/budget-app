@@ -29,7 +29,7 @@ button{padding:10px;border-radius:10px;border:1px solid #888;background:#f6f6f6;
 <input id="monthKey" type="month">
 <button onclick="saveMonth()">حفظ هذا الشهر</button>
 <button onclick="loadMonth()">تحميل هذا الشهر</button>
-<div id="cloudStatus">Cloud: ...</div>
+<div id="cloudStatus">Cloud: جاهز</div>
 </div>
 
 <div class="card grid">
@@ -63,14 +63,12 @@ button{padding:10px;border-radius:10px;border:1px solid #888;background:#f6f6f6;
 </div>
 
 <script>
-const CLOUD_URL = "https://script.google.com/macros/s/AKfycbyq-apJa8hRqlcMF8HI6slo-tuW_dTVRvC-Xw0I87C25UyqVknMhB7JZnUtE8zK4wyR/exec";
+const CLOUD_URL="https://script.google.com/macros/s/AKfycbyq-apJa8hRqlcMF8HI6slo-tuW_dTVRvC-Xw0I87C25UyqVknMhB7JZnUtE8zK4wyR/exec";
 
 function n(id){ return Number(document.getElementById(id).value)||0 }
 function set(id,v){ document.getElementById(id).value=v }
-
-function currentMonth(){
-  return document.getElementById("monthKey").value;
-}
+function currentMonth(){ return document.getElementById("monthKey").value }
+function cloudStatus(t){ document.getElementById("cloudStatus").innerText=t }
 
 function captureMonth(){
   return {
@@ -90,44 +88,40 @@ function captureMonth(){
   }
 }
 
-function cloudStatus(t){ document.getElementById("cloudStatus").innerText=t }
+function jsonp(url){
+  return new Promise((resolve,reject)=>{
+    const cb="cb_"+Date.now();
+    window[cb]=d=>{delete window[cb];resolve(d)};
+    const s=document.createElement("script");
+    s.src=url+"&callback="+cb;
+    s.onerror=()=>reject();
+    document.body.appendChild(s);
+  });
+}
 
 async function saveMonth(){
+  if(!currentMonth()){alert("حدد الشهر");return}
   cloudStatus("Cloud: جاري الحفظ...");
-  const payload={
-    month:currentMonth(),
-    global:{savingsBalance:0,reserveBalance:0},
-    monthData:captureMonth(),
-    extraAmount:0
-  };
-
-  const url=CLOUD_URL+"?action=save&payload="+encodeURIComponent(JSON.stringify(payload))+"&callback=cb";
-
-  window.cb=function(res){
-    if(res.ok){ cloudStatus("Cloud: تم الحفظ ✅") }
-    else{ cloudStatus("Cloud: فشل ❌") }
-  };
-
-  const s=document.createElement("script");
-  s.src=url;
-  document.body.appendChild(s);
+  const payload={month:currentMonth(),global:{savingsBalance:0,reserveBalance:0},monthData:captureMonth(),extraAmount:0};
+  const url=CLOUD_URL+"?action=save&payload="+encodeURIComponent(JSON.stringify(payload));
+  try{
+    const res=await jsonp(url);
+    if(res.ok) cloudStatus("Cloud: تم الحفظ ✅");
+    else cloudStatus("Cloud: فشل ❌");
+  }catch{ cloudStatus("Cloud: خطأ اتصال ❌") }
 }
 
 async function loadMonth(){
+  if(!currentMonth()){alert("حدد الشهر");return}
   cloudStatus("Cloud: جاري التحميل...");
-  const url=CLOUD_URL+"?action=load&month="+currentMonth()+"&callback=cb";
-
-  window.cb=function(res){
-    if(!res.ok){ cloudStatus("Cloud: لا توجد بيانات"); return }
-
+  const url=CLOUD_URL+"?action=load&month="+currentMonth();
+  try{
+    const res=await jsonp(url);
+    if(!res.ok){cloudStatus("Cloud: لا بيانات");return}
     const d=res.data.monthData||{};
-    for(const k in d){ if(document.getElementById(k)) set(k,d[k]) }
-    cloudStatus("Cloud: تم التحميل ✅")
-  };
-
-  const s=document.createElement("script");
-  s.src=url;
-  document.body.appendChild(s);
+    for(const k in d) if(document.getElementById(k)) set(k,d[k]);
+    cloudStatus("Cloud: تم التحميل ✅");
+  }catch{ cloudStatus("Cloud: خطأ اتصال ❌") }
 }
 </script>
 
