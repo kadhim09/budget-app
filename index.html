@@ -1,174 +1,645 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>إدارة الدخل والمصاريف</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>إدارة الدخل والمصاريف</title>
 
-<style>
-body{font-family:system-ui;margin:18px;background:#fafafa}
-.wrap{max-width:900px;margin:auto}
-.card{background:#fff;border:1px solid #ddd;border-radius:12px;padding:14px;margin-bottom:12px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-input{width:100%;padding:10px;border-radius:10px;border:1px solid #ccc}
-button{padding:10px;border-radius:10px;border:1px solid #888;background:#f6f6f6;cursor:pointer}
-.ok{color:green;font-weight:700}
-.warn{color:red;font-weight:700}
-</style>
+  <style>
+    body { font-family: system-ui, Arial; margin: 18px; line-height: 1.6; background:#fafafa; }
+    .wrap { max-width: 980px; margin: auto; }
+    .card { border: 1px solid #ddd; border-radius: 12px; padding: 14px; margin-bottom: 12px; background:#fff; }
+    h2,h3 { margin: 0 0 10px; }
+    .muted { color: #666; font-size: 13px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    label { display:block; font-size: 14px; margin-bottom: 6px; }
+    input { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #ccc; }
+    input[readonly] { background:#f7f7f7; }
+    button { padding: 10px 14px; border-radius: 10px; border: 1px solid #999; background: #f6f6f6; cursor: pointer; }
+    button:active { transform: scale(0.99); }
+    .row { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px dashed #eee; }
+    .row:last-child { border-bottom: 0; }
+    .ok { font-weight: 700; }
+    .warn { font-weight: 700; color: #b00020; }
+    .line { border: none; border-top: 1px solid #eee; margin: 14px 0; }
+
+    .btns { display:flex; gap:8px; flex-wrap: wrap; margin-top: 10px; }
+    .btns button { flex: 1 1 150px; }
+
+    .status { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px; }
+    .pill { display:inline-flex; gap:6px; align-items:center; padding:6px 10px; border:1px solid #ddd; border-radius:999px; font-size:12px; background:#fafafa; }
+    .dot { width:10px; height:10px; border-radius:50%; display:inline-block; background:#999; }
+    .dot.ok { background:#1b8f3a; }
+    .dot.warn { background:#b00020; }
+
+    .expense-row { display:grid; grid-template-columns: 1.2fr 1fr auto; gap:10px; align-items:end; }
+    .expense-row .remove { padding: 10px 12px; }
+
+    @media (max-width: 760px) {
+      .grid, .grid3 { grid-template-columns: 1fr; }
+      .expense-row { grid-template-columns: 1fr; }
+      .btns button { flex: 1 1 48%; }
+    }
+  </style>
 </head>
 
 <body>
 <div class="wrap">
 
-<div class="card">
-<h2>إدارة الدخل والمصاريف</h2>
-</div>
+  <div class="card">
+    <h2>إدارة الدخل والمصاريف</h2>
+    <div class="muted">الدخل الكلي يُحسب تلقائيًا، وكل المصاريف تُخصم منه. (سحب الاحتياط لا يؤثر على الدخل)</div>
+  </div>
 
-<div class="card">
-<label>الشهر</label>
-<input id="monthKey" type="month">
-<button type="button" onclick="saveMonth()">حفظ هذا الشهر</button>
-<button type="button" onclick="loadMonth()">تحميل هذا الشهر</button>
-<div id="cloudStatus">Cloud: جاري التحقق...</div>
-</div>
+  <div class="card" id="monthCard">
+    <h3>إدارة الشهور (Cloud فقط)</h3>
 
-<div class="card grid">
-<div><label>الراتب الأول</label><input id="salary1" type="number" value="0"></div>
-<div><label>الراتب الثاني</label><input id="salary2" type="number" value="0"></div>
-</div>
+    <div>
+      <label>الشهر</label>
+      <input id="monthKey" type="month">
+      <div class="muted">ملاحظة: لا يوجد حفظ محلي نهائياً — كل شي ينحفظ ويُسحب من Google Sheet عبر Cloud.</div>
+    </div>
 
-<div class="card grid">
-<div><label>روضة</label><input id="nursery" type="number" value="0"></div>
-<div><label>مدرسة</label><input id="school" type="number" value="0"></div>
-</div>
+    <div style="margin-top:12px">
+      <label>إجراءات</label>
+      <div class="btns" style="margin-top:6px">
+        <button type="button" onclick="saveMonth()">حفظ هذا الشهر</button>
+        <button type="button" onclick="loadMonth()">تحميل هذا الشهر</button>
+        <button type="button" onclick="startNewMonth()">بدء شهر جديد</button>
+        <button type="button" onclick="clearFormOnly()">تصفير الحقول (بدون حفظ)</button>
+      </div>
 
-<div class="card grid">
-<div><label>ملابس طفل</label><input id="babyClothes" type="number" value="0"></div>
-<div><label>حليب</label><input id="babyMilk" type="number" value="0"></div>
-<div><label>حفاظات</label><input id="babyDiapers" type="number" value="0"></div>
-</div>
+      <div class="status">
+        <span class="pill" id="cloudState"><span class="dot"></span> Cloud: جاري التحقق...</span>
+        <span class="pill" id="saveState"><span class="dot"></span> حالة: جاهز</span>
+      </div>
+    </div>
+  </div>
 
-<div class="card grid">
-<div><label>رصيد</label><input id="phone" type="number" value="0"></div>
-<div><label>بيت</label><input id="home" type="number" value="0"></div>
-<div><label>ثانوي</label><input id="secondary" type="number" value="0"></div>
-<div><label>أخرى</label><input id="other" type="number" value="0"></div>
-</div>
+  <div class="card">
+    <h3>الدخل</h3>
+    <div class="grid">
+      <div>
+        <label>الراتب الأول</label>
+        <input id="salary1" type="number" value="0" min="0" step="1000">
+      </div>
+      <div>
+        <label>الراتب الثاني</label>
+        <input id="salary2" type="number" value="0" min="0" step="1000">
+      </div>
+    </div>
 
-<div class="card grid">
-<div><label>إضافة ادخار</label><input id="savingsAdd" type="number" value="0"></div>
-<div><label>إضافة احتياط</label><input id="reserveAdd" type="number" value="0"></div>
-</div>
+    <div style="margin-top:10px" class="grid">
+      <div>
+        <label>الدخل الكلي</label>
+        <input id="totalIncome" type="text" readonly>
+      </div>
+      <div class="muted">هذا الرقم هو الأساس الذي تُخصم منه المصاريف.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>مصاريف تعليم</h3>
+    <div class="grid">
+      <div>
+        <label>مصاريف روضة</label>
+        <input id="nursery" type="number" value="0" min="0" step="1000">
+      </div>
+      <div>
+        <label>مصاريف مدرسة</label>
+        <input id="school" type="number" value="0" min="0" step="1000">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>مصاريف طفل جديد</h3>
+    <div class="grid3">
+      <div>
+        <label>ملابس</label>
+        <input id="babyClothes" type="number" value="0" min="0" step="1000">
+      </div>
+      <div>
+        <label>حليب</label>
+        <input id="babyMilk" type="number" value="0" min="0" step="1000">
+      </div>
+      <div>
+        <label>حفاظات</label>
+        <input id="babyDiapers" type="number" value="0" min="0" step="1000">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>مصاريف عامة</h3>
+    <div class="grid">
+      <div>
+        <label>مصاريف رصيد</label>
+        <input id="phone" type="number" value="0" min="0" step="1000">
+      </div>
+      <div>
+        <label>مصاريف بيت</label>
+        <input id="home" type="number" value="0" min="0" step="1000">
+      </div>
+      <div>
+        <label>مصاريف ثانوية</label>
+        <input id="secondary" type="number" value="0" min="0" step="1000">
+      </div>
+      <div>
+        <label>حقل إضافي (أي مصروف آخر)</label>
+        <input id="other" type="number" value="0" min="0" step="1000">
+      </div>
+    </div>
+
+    <hr class="line">
+
+    <h3 style="margin-top:0">مصاريف إضافية (تضيفها أنت)</h3>
+    <div class="muted">اضغط "إضافة مصروف" حتى تضيف سطر جديد باسم ومبلغ. هذا المبلغ ينخصم من الدخل الكلي.</div>
+
+    <div id="extraExpenses"></div>
+
+    <div class="btns">
+      <button type="button" onclick="addExpenseRow()">إضافة مصروف</button>
+      <button type="button" onclick="clearExtraExpenses()">مسح المصاريف الإضافية</button>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <div>مجموع المصاريف الإضافية</div>
+      <div class="ok" id="extraTotal">-</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>الادخار والاحتياط (تراكم Cloud)</h3>
+
+    <div class="grid">
+      <div>
+        <label>ادخار: الرصيد الحالي (يتراكم)</label>
+        <input id="savingsBalance" type="number" value="0" min="0" step="1000">
+      </div>
+      <div>
+        <label>ادخار: إضافة هذا الشهر</label>
+        <input id="savingsAdd" type="number" value="0" min="0" step="1000">
+        <div class="btns">
+          <button type="button" onclick="applySavings()">أضف إلى الادخار</button>
+          <button type="button" onclick="resetSavingsAdd()">تصفير إضافة الادخار</button>
+        </div>
+      </div>
+    </div>
+
+    <hr class="line">
+
+    <div class="grid">
+      <div>
+        <label>احتياط: الرصيد الحالي (يتراكم)</label>
+        <input id="reserveBalance" type="number" value="0" min="0" step="1000">
+      </div>
+      <div>
+        <label>احتياط: إضافة هذا الشهر</label>
+        <input id="reserveAdd" type="number" value="0" min="0" step="1000">
+        <div class="btns">
+          <button type="button" onclick="applyReserve()">أضف إلى الاحتياط</button>
+          <button type="button" onclick="resetReserveAdd()">تصفير إضافة الاحتياط</button>
+        </div>
+      </div>
+    </div>
+
+    <hr class="line">
+
+    <div class="grid">
+      <div>
+        <label>سحب من الاحتياط (لا يؤثر على الدخل الكلي)</label>
+        <input id="reserveWithdraw" type="number" value="0" min="0" step="1000">
+        <div class="btns">
+          <button type="button" onclick="withdrawReserve()">سحب</button>
+          <button type="button" onclick="resetReserveWithdraw()">تصفير السحب</button>
+        </div>
+      </div>
+      <div class="muted">
+        هذا السحب ينقص من رصيد الاحتياط المتراكم فقط، ولا يدخل ضمن المصاريف الشهرية.
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <div>رصيد الاحتياط الحالي</div>
+      <div class="ok" id="reserveDisplay">-</div>
+    </div>
+
+    <div class="muted" style="margin-top:10px">
+      تنبيه: "إضافة هذا الشهر" للادخار/الاحتياط تُحسب ضمن المصاريف لأنها تُخصم من الدخل الكلي. أما "سحب من الاحتياط" لا علاقة له بالدخل.
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>النتائج</h3>
+    <div class="row"><div>الدخل الكلي</div><div class="ok" id="r_income">-</div></div>
+    <div class="row"><div>إجمالي المصاريف</div><div class="ok" id="r_expenses">-</div></div>
+    <div class="row"><div>الباقي بعد كل المصاريف</div><div id="r_left">-</div></div>
+    <div class="row"><div>نسبة المصاريف من الدخل</div><div id="r_ratio">-</div></div>
+  </div>
 
 </div>
 
 <script>
-const CLOUD_URL="https://script.google.com/macros/s/AKfycbxWW26uX2O-7CJ_5fiq_LVHI6v5UEUVzxRONiDxqVNiZ_PhVEkR9KOuVFevxNdWMy0qRw/exec";
+  // ===========================
+  // ✅ رابط الكلاود (Google Apps Script WebApp)
+  // ===========================
+  const CLOUD_URL = "https://script.google.com/macros/s/AKfycbxWW26uX2O-7CJ_5fiq_LVHI6v5UEUVzxRONiDxqVNiZ_PhVEkR9KOuVFevxNdWMy0qRw/exec";
 
-function n(id){ return Number(document.getElementById(id).value)||0 }
-function setv(id,v){ document.getElementById(id).value=v }
-function currentMonth(){ return document.getElementById("monthKey").value }
-function cloudStatus(t){ document.getElementById("cloudStatus").innerText=t }
-
-function captureMonth(){
-  return {
-    salary1:n("salary1"),
-    salary2:n("salary2"),
-    nursery:n("nursery"),
-    school:n("school"),
-    babyClothes:n("babyClothes"),
-    babyMilk:n("babyMilk"),
-    babyDiapers:n("babyDiapers"),
-    phone:n("phone"),
-    home:n("home"),
-    secondary:n("secondary"),
-    other:n("other"),
-    savingsAdd:n("savingsAdd"),
-    reserveAdd:n("reserveAdd")
+  // ===== أدوات عامة =====
+  const el = (id) => document.getElementById(id);
+  function nVal(input){ return Number(input?.value) || 0; }
+  function n(id){ return Number(el(id)?.value) || 0; }
+  function setVal(id, v){ if(el(id)) el(id).value = (v ?? ""); }
+  function fmt(v){
+    const x = Math.round(Number(v) || 0);
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + " د.ع";
   }
-}
 
-// JSONP helper
-function jsonp(url){
-  return new Promise((resolve,reject)=>{
-    const cb="cb_"+Math.random().toString(36).slice(2);
-    window[cb]=d=>{ try{ delete window[cb] }catch(e){ window[cb]=undefined } resolve(d) };
-    const s=document.createElement("script");
-    const sep = url.includes("?") ? "&" : "?";
-    s.src=url + sep + "callback=" + encodeURIComponent(cb);
-    s.onerror=()=>reject(new Error("script error"));
-    document.body.appendChild(s);
-  });
-}
-
-function getThisMonth(){
-  const d=new Date();
-  const mm=String(d.getMonth()+1).padStart(2,"0");
-  return `${d.getFullYear()}-${mm}`;
-}
-
-async function ping(){
-  try{
-    const res=await jsonp(CLOUD_URL+"?action=ping");
-    if(res && res.ok) cloudStatus("Cloud: جاهز ✅");
-    else cloudStatus("Cloud: غير متصل ❌");
-  }catch{
-    cloudStatus("Cloud: غير متصل ❌");
-  }
-}
-
-async function saveMonth(){
-  const mk=currentMonth();
-  if(!mk){ alert("حدد الشهر أولاً"); return; }
-
-  cloudStatus("Cloud: جاري الحفظ...");
-  const payload={
-    month:mk,
-    global:{savingsBalance:0,reserveBalance:0},
-    monthData:captureMonth(),
-    extraAmount:0
-  };
-
-  const url=CLOUD_URL+"?action=save&payload="+encodeURIComponent(JSON.stringify(payload));
-
-  try{
-    const res=await jsonp(url);
-    if(res && res.ok) cloudStatus("Cloud: تم الحفظ ✅ (Row "+res.row+")");
-    else cloudStatus("Cloud: فشل ❌");
-  }catch(e){
-    cloudStatus("Cloud: خطأ اتصال ❌");
-  }
-}
-
-async function loadMonth(){
-  const mk=currentMonth();
-  if(!mk){ alert("حدد الشهر أولاً"); return; }
-
-  cloudStatus("Cloud: جاري التحميل...");
-  const url=CLOUD_URL+"?action=load&month="+encodeURIComponent(mk);
-
-  try{
-    const res=await jsonp(url);
-    if(!res || !res.ok){ cloudStatus("Cloud: لا بيانات"); return; }
-
-    const d=(res.data && res.data.monthData) ? res.data.monthData : null;
-    if(!d){ cloudStatus("Cloud: ماكو بيانات لهذا الشهر"); return; }
-
-    for(const k in d){
-      if(document.getElementById(k)) setv(k, d[k]);
+  function setSaveState(text, ok=true){
+    const box = el("saveState");
+    if(!box) return;
+    const dot = box.querySelector(".dot");
+    if(dot){
+      dot.classList.remove("ok","warn");
+      dot.classList.add(ok ? "ok" : "warn");
     }
-    cloudStatus("Cloud: تم التحميل ✅");
-  }catch(e){
-    cloudStatus("Cloud: خطأ اتصال ❌");
+    box.childNodes[1].nodeValue = " " + text;
   }
-}
 
-// INIT: خلي الشهر تلقائي + ping
-(function init(){
-  const monthInput=document.getElementById("monthKey");
-  if(!monthInput.value) monthInput.value = getThisMonth();
-  ping();
-})();
+  function setCloudState(text, ok=true){
+    const box = el("cloudState");
+    if(!box) return;
+    const dot = box.querySelector(".dot");
+    if(dot){
+      dot.classList.remove("ok","warn");
+      dot.classList.add(ok ? "ok" : "warn");
+    }
+    box.childNodes[1].nodeValue = " " + text;
+  }
+
+  // ===== JSONP (حل CORS) =====
+  function jsonp(url, timeoutMs=15000){
+    return new Promise((resolve, reject) => {
+      const cbName = "cb_" + Math.random().toString(36).slice(2);
+      const script = document.createElement("script");
+
+      const timer = setTimeout(() => {
+        cleanup();
+        reject(new Error("timeout"));
+      }, timeoutMs);
+
+      function cleanup(){
+        clearTimeout(timer);
+        try{ delete window[cbName]; }catch(e){ window[cbName]=undefined; }
+        if(script.parentNode) script.parentNode.removeChild(script);
+      }
+
+      window[cbName] = (data) => {
+        cleanup();
+        resolve(data);
+      };
+
+      const sep = url.includes("?") ? "&" : "?";
+      script.src = url + sep + "callback=" + encodeURIComponent(cbName) + "&_ts=" + Date.now();
+      script.onerror = () => { cleanup(); reject(new Error("script error")); };
+      document.body.appendChild(script);
+    });
+  }
+
+  // ===== التاريخ/الشهر =====
+  function getThisMonth(){
+    const d = new Date();
+    const mm = String(d.getMonth()+1).padStart(2,"0");
+    return `${d.getFullYear()}-${mm}`;
+  }
+
+  function currentMonthKey(){
+    const v = el("monthKey")?.value;
+    return v && /^\d{4}-\d{2}$/.test(v) ? v : getThisMonth();
+  }
+
+  function monthPlusOne(ym){
+    const [y,m] = ym.split("-").map(Number);
+    const d = new Date(y, m-1, 1);
+    d.setMonth(d.getMonth()+1);
+    const mm = String(d.getMonth()+1).padStart(2,"0");
+    return `${d.getFullYear()}-${mm}`;
+  }
+
+  function markDirty(){ setSaveState("حالة: تغييرات غير محفوظة", false); }
+
+  // ===== مصاريف إضافية =====
+  function addExpenseRow(nameVal="", amountVal=0){
+    const wrap = el("extraExpenses");
+
+    const row = document.createElement("div");
+    row.className = "expense-row";
+    row.style.marginTop = "10px";
+
+    const nameBox = document.createElement("div");
+    const nameLabel = document.createElement("label");
+    nameLabel.textContent = "اسم المصروف";
+    const nameInput = document.createElement("input");
+    nameInput.type = "text";
+    nameInput.placeholder = "مثال: صيانة / علاج / ملابس";
+    nameInput.value = nameVal || "";
+    nameInput.addEventListener("input", () => { calc(); markDirty(); });
+    nameBox.appendChild(nameLabel);
+    nameBox.appendChild(nameInput);
+
+    const amountBox = document.createElement("div");
+    const amountLabel = document.createElement("label");
+    amountLabel.textContent = "المبلغ";
+    const amountInput = document.createElement("input");
+    amountInput.type = "number";
+    amountInput.min = "0";
+    amountInput.step = "1000";
+    amountInput.value = String(amountVal || 0);
+    amountInput.addEventListener("input", () => { calc(); markDirty(); });
+    amountBox.appendChild(amountLabel);
+    amountBox.appendChild(amountInput);
+
+    const btnBox = document.createElement("div");
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "remove";
+    removeBtn.textContent = "حذف";
+    removeBtn.addEventListener("click", () => {
+      row.remove();
+      calc();
+      markDirty();
+    });
+    btnBox.appendChild(removeBtn);
+
+    row._nameInput = nameInput;
+    row._amountInput = amountInput;
+
+    row.appendChild(nameBox);
+    row.appendChild(amountBox);
+    row.appendChild(btnBox);
+    wrap.appendChild(row);
+
+    calc();
+    markDirty();
+  }
+
+  function getExtraExpensesList(){
+    const rows = el("extraExpenses")?.querySelectorAll(".expense-row") || [];
+    const list = [];
+    rows.forEach(r => {
+      list.push({
+        name: (r._nameInput?.value || "").trim(),
+        amount: nVal(r._amountInput)
+      });
+    });
+    return list;
+  }
+
+  function getExtraExpensesTotal(){
+    return getExtraExpensesList().reduce((a,b)=>a+(Number(b.amount)||0), 0);
+  }
+
+  function clearExtraExpenses(){
+    el("extraExpenses").innerHTML = "";
+    calc();
+    markDirty();
+  }
+
+  // ===== الحساب =====
+  function calc(){
+    const income = n("salary1") + n("salary2");
+    el("totalIncome").value = fmt(income);
+
+    const edu = n("nursery") + n("school");
+    const baby = n("babyClothes") + n("babyMilk") + n("babyDiapers");
+    const general = n("phone") + n("home") + n("secondary") + n("other");
+    const monthlySavings = n("savingsAdd");
+    const monthlyReserve = n("reserveAdd");
+
+    const extra = getExtraExpensesTotal();
+    el("extraTotal").textContent = fmt(extra);
+
+    const expenses = edu + baby + general + monthlySavings + monthlyReserve + extra;
+    const left = income - expenses;
+
+    el("r_income").textContent = fmt(income);
+    el("r_expenses").textContent = fmt(expenses);
+
+    const leftEl = el("r_left");
+    leftEl.textContent = fmt(left);
+    leftEl.className = (left >= 0) ? "ok" : "warn";
+
+    const ratio = income > 0 ? (expenses / income) * 100 : 0;
+    el("r_ratio").textContent = ratio.toFixed(1) + "%";
+
+    el("reserveDisplay").textContent = fmt(n("reserveBalance"));
+  }
+
+  // ===== تراكم =====
+  function applySavings(){
+    const add = n("savingsAdd");
+    if(add <= 0) return;
+    setVal("savingsBalance", n("savingsBalance") + add);
+    setVal("savingsAdd", 0);
+    calc();
+    markDirty();
+  }
+  function resetSavingsAdd(){ setVal("savingsAdd", 0); calc(); markDirty(); }
+
+  function applyReserve(){
+    const add = n("reserveAdd");
+    if(add <= 0) return;
+    setVal("reserveBalance", n("reserveBalance") + add);
+    setVal("reserveAdd", 0);
+    calc();
+    markDirty();
+  }
+  function resetReserveAdd(){ setVal("reserveAdd", 0); calc(); markDirty(); }
+
+  function withdrawReserve(){
+    const w = n("reserveWithdraw");
+    if(w <= 0) return;
+    const current = n("reserveBalance");
+    const newBal = current - w;
+    if(newBal < 0){ alert("المبلغ أكبر من رصيد الاحتياط الحالي."); return; }
+    setVal("reserveBalance", newBal);
+    setVal("reserveWithdraw", 0);
+    calc();
+    markDirty();
+  }
+  function resetReserveWithdraw(){ setVal("reserveWithdraw", 0); calc(); markDirty(); }
+
+  // ===== الشهرية =====
+  const MONTH_FIELDS = [
+    "salary1","salary2",
+    "nursery","school",
+    "babyClothes","babyMilk","babyDiapers",
+    "phone","home","secondary","other",
+    "savingsAdd","reserveAdd"
+  ];
+
+  function captureMonth(){
+    const data = {};
+    MONTH_FIELDS.forEach(id => data[id] = n(id));
+    data.extraExpenses = getExtraExpensesList();
+    return data;
+  }
+
+  function applyMonthData(data){
+    MONTH_FIELDS.forEach(id => setVal(id, (data?.[id] ?? 0)));
+    el("extraExpenses").innerHTML = "";
+    (data?.extraExpenses || []).forEach(x => addExpenseRow(x.name || "", Number(x.amount)||0));
+    setVal("reserveWithdraw", 0);
+    calc();
+  }
+
+  function clearMonthForm(){
+    MONTH_FIELDS.forEach(id => setVal(id, 0));
+    el("extraExpenses").innerHTML = "";
+    setVal("reserveWithdraw", 0);
+    calc();
+  }
+
+  // ===== Cloud =====
+  async function cloudPing(){
+    try{
+      const out = await jsonp(CLOUD_URL + "?action=ping");
+      if(out && out.ok) setCloudState("Cloud: متصل ✅", true);
+      else setCloudState("Cloud: غير متصل ❌", false);
+    }catch(e){
+      setCloudState("Cloud: غير متصل ❌", false);
+    }
+  }
+
+  async function cloudSaveNow(){
+    const mk = currentMonthKey();
+    if(!mk) { alert("اختر الشهر أولاً."); return false; }
+
+    setCloudState("Cloud: جاري الحفظ...", true);
+
+    const payload = {
+      month: mk,
+      global: {
+        savingsBalance: n("savingsBalance"),
+        reserveBalance: n("reserveBalance")
+      },
+      monthData: captureMonth()
+    };
+
+    const url = CLOUD_URL + "?action=save&payload=" + encodeURIComponent(JSON.stringify(payload));
+
+    try{
+      const out = await jsonp(url);
+      if(out && out.ok){
+        setCloudState("Cloud: تم الحفظ ✅", true);
+        setSaveState("حالة: محفوظ ✅", true);
+        return true;
+      }else{
+        setCloudState("Cloud: فشل ❌", false);
+        setSaveState("حالة: فشل بالحفظ ❌", false);
+        return false;
+      }
+    }catch(e){
+      setCloudState("Cloud: فشل ❌", false);
+      setSaveState("حالة: فشل بالحفظ ❌", false);
+      return false;
+    }
+  }
+
+  async function cloudLoadMonth(monthKey){
+    try{
+      if(!monthKey) { alert("اختر الشهر أولاً."); return; }
+      setCloudState("Cloud: جاري التحميل...", true);
+
+      const out = await jsonp(CLOUD_URL + "?action=load&month=" + encodeURIComponent(monthKey));
+      if(!out || out.ok !== true) throw new Error("bad response");
+
+      if(out?.data?.global){
+        setVal("savingsBalance", Number(out.data.global.savingsBalance)||0);
+        setVal("reserveBalance", Number(out.data.global.reserveBalance)||0);
+      }
+
+      if(out?.data?.monthData){
+        applyMonthData(out.data.monthData);
+      }else{
+        clearMonthForm();
+      }
+
+      setCloudState("Cloud: تم التحميل ✅", true);
+      setSaveState("حالة: تم التحميل ✅", true);
+    }catch(e){
+      setCloudState("Cloud: فشل التحميل ❌", false);
+      setSaveState("حالة: فشل التحميل ❌", false);
+    }
+  }
+
+  // ===== أزرار =====
+  async function saveMonth(){
+    const ok = await cloudSaveNow();
+    if(ok) alert("تم الحفظ ✅ للشهر: " + currentMonthKey());
+    else alert("فشل بالحفظ ❌. تأكد من نشر المايكرو كـ Web App وصلاحياته.");
+  }
+
+  function loadMonth(){
+    const mk = currentMonthKey();
+    cloudLoadMonth(mk);
+  }
+
+  function startNewMonth(){
+    const mk = currentMonthKey();
+    const next = monthPlusOne(mk);
+    el("monthKey").value = next;
+    clearMonthForm();
+    setSaveState("حالة: تغييرات غير محفوظة", false);
+    alert("تم بدء شهر جديد: " + next + "\n(لا تنسى تضغط حفظ بعد ما تدخل بياناتك)");
+    // تحميل الشهر الجديد من الكلاود إذا موجود
+    cloudLoadMonth(next);
+  }
+
+  function clearFormOnly(){
+    if(!confirm("تأكيد: تصفير كل الحقول بدون حفظ؟")) return;
+    clearMonthForm();
+    setSaveState("حالة: تغييرات غير محفوظة", false);
+  }
+
+  function onMonthChange(){
+    const mk = currentMonthKey();
+    cloudLoadMonth(mk);
+  }
+
+  // ===== تهيئة =====
+  function init(){
+    el("monthKey").value = getThisMonth();
+
+    // listeners
+    const ids = [...MONTH_FIELDS,"savingsBalance","reserveBalance","reserveWithdraw"];
+    ids.forEach(id => el(id)?.addEventListener("input", () => { calc(); markDirty(); }));
+    el("monthKey").addEventListener("change", onMonthChange);
+
+    calc();
+
+    // تحقق + تحميل
+    cloudPing().then(() => cloudLoadMonth(currentMonthKey()));
+    setSaveState("حالة: جاهز", true);
+  }
+
+  // expose
+  window.addExpenseRow = addExpenseRow;
+  window.clearExtraExpenses = clearExtraExpenses;
+  window.applySavings = applySavings;
+  window.resetSavingsAdd = resetSavingsAdd;
+  window.applyReserve = applyReserve;
+  window.resetReserveAdd = resetReserveAdd;
+  window.withdrawReserve = withdrawReserve;
+  window.resetReserveWithdraw = resetReserveWithdraw;
+  window.saveMonth = saveMonth;
+  window.loadMonth = loadMonth;
+  window.startNewMonth = startNewMonth;
+  window.clearFormOnly = clearFormOnly;
+
+  init();
 </script>
 
 </body>
